@@ -1,2 +1,2 @@
 # SimpleQPSolver
-A small, efficient class for solving quadratic programming problems.
+A small, efficient class for solving quadratic optimisation problems.

@@ -7,10 +7,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_BUILD_TYPE Release)
 
 # Default build is Release. To build in other modes use:
-#
-#	cmake -DCMAKE_BUILD_TYPE=Type ../
-#
-# where 'Type' is:
 #	- Debug			(Information, not optimised)
 #	- Release		(No information, optimised)
 #	- RelWithDebInfo	(Information & optimised)

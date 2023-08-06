@@ -5,7 +5,11 @@
 
 int main(int argc, char *argv[])
 {
-	srand((unsigned int) time(0));					                            // Random seed generator
+	std::cout << "Worker bees can leave.\n";
+	std::cout << "Even drones can fly away.\n";
+	std::cout << "The Queen is their slave.\n";
+	
+/*	srand((unsigned int) time(0));					                            // Random seed generator
 	
 	// Variables used in this scope
 	int m, n;
@@ -129,7 +133,7 @@ int main(int argc, char *argv[])
 	{
 		std::cout << exception.what() << std::endl;
 	}
-/*
+
 	// Record statistics on performance
 	std::ofstream out("qp_test_data.csv");
 	for(int i = 0; i < 100; i++)

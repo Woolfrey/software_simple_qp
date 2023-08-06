@@ -1,10 +1,11 @@
 #include <QPSolver.h>                                                                               // Declaration of functions
 
+/*
   ///////////////////////////////////////////////////////////////////////////////////////////////////
  //                        Solve a generic QP problem min 0.5*x'*H*x + x'*f                       //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-Eigen::VectorXf QPSolver::solve(const Eigen::MatrixXf &H,
-                                const Eigen::VectorXf &f)
+Eigen::VectorXf QPSolver<DataType>::solve(const Eigen::MatrixXf &H,
+                                          const Eigen::VectorXf &f)
 {
 	if(H.rows() != H.cols())
 	{
@@ -21,6 +22,7 @@ Eigen::VectorXf QPSolver::solve(const Eigen::MatrixXf &H,
 	}
 	else 	return H.ldlt().solve(-f);                                                          // Too easy lol ᕙ(▀̿̿ĺ̯̿̿▀̿ ̿) ᕗ
 }
+
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
  //          Solve a constrained QP problem: min 0.5*x'*H*x + x'*f subject to: B*x >= z           //
@@ -405,7 +407,7 @@ Eigen::VectorXf QPSolver::redundant_least_squares(const Eigen::VectorXf &xd,
 		startPoint.tail(n) = x0;
 		
 		return (solve(H,f,B,z,startPoint)).tail(n);                                         // Convert to standard form and solve
-		*/
+		
 	}
 }
 
@@ -482,4 +484,4 @@ Eigen::VectorXf QPSolver::redundant_least_squares(const Eigen::VectorXf &xd,
 		}
 	}	
 }
-    
+*/

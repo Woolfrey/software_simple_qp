@@ -5,6 +5,26 @@
 #include <iostream>                                                                                 // std::cerr, std::cout
 #include <vector>                                                                                   // std::vector
 
+
+template <class DataType>
+class QPSolver
+{
+	public:
+		QPSolver(DataType dataType) : type(dataType) {}
+		
+		template<typename Derived>
+		Eigen::MatrixBase<Derived> lol()
+		{
+			Eigen::Matrix<DataType,5,5> matrix; matrix.setIdentity();
+		
+			return matrix;
+		}
+		
+	private:
+		DataType type;
+};                                                                                                  // Required after class declaration
+
+/*
 class QPSolver
 {
 	public:
@@ -66,6 +86,6 @@ class QPSolver
 		int   steps    = 40;                                                                // No. of steps to run interior point method
 		
 		Eigen::VectorXf lastSolution;
-};                                                                                                  // Semicolon needed after class declaration
+};  */                                                                                                // Semicolon needed after class declaration
 
 #endif

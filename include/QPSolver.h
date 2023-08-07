@@ -5,40 +5,20 @@
 #include <iostream>                                                                                 // std::cerr, std::cout
 #include <vector>                                                                                   // std::vector
 
-
 template <class DataType>
 class QPSolver
 {
 	public:
-		QPSolver() {}
+		QPSolver() : type(DataType) {}
 		
 		template<typename Derived1, typename Derived2>
-		static Eigen::MatrixBase<Derived2> solve(const Eigen::MatrixBase<Derived1> &H,
-		                                         const Eigen::MatrixBase<Derived2> &f)
-		{
-			if(H.rows() != H.cols())
-			{
-				throw std::invalid_argument("[ERROR] [QP SOLVER] solve(): "
-				                            "Expected a square matrix for the Hessian argument "
-				                            "but it was " + std::to_string(H.rows()) + "x"
-				                            + std::to_string(H.cols()) + ".");
-			}
-			else if(f.cols() != 1)
-			{
-				throw std::invalid_argument("[ERROR] [QP SOLVER] solve(): "
-				                            "Expected a vector for the second argument but it had "
-				                            + std::to_string(f.cols()) + " columns.");
-			}
-			
-			return H.ldlt().solve(-f);                                                  // Too easy lol
-		}
-		
-		static void lol()
-		{
-			std::cout << Eigen::MatrixXf::Identity(3,3) << std::endl;
-		}
+		static typename Derived2::Matrix solve(const Eigen::MatrixBase<Derived1> &H,
+		                                       const Eigen::MatrixBase<Derived2> &f);
 		
 	private:
+		
+		DataType type;
+	
 };                                                                                                  // Required after class declaration
 
 /*

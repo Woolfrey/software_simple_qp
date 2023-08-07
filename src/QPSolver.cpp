@@ -1,11 +1,11 @@
 #include <QPSolver.h>                                                                               // Declaration of functions
 
-/*
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////
  //                        Solve a generic QP problem min 0.5*x'*H*x + x'*f                       //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-Eigen::VectorXf QPSolver<DataType>::solve(const Eigen::MatrixXf &H,
-                                          const Eigen::VectorXf &f)
+template<typename Derived1, typename Derived2>
+typename Derived2::Matrix QPSolver<type>::solve(const Eigen::MatrixBase<Derived1> &H, const Eigen::MatrixBase<Derived2> &f)
 {
 	if(H.rows() != H.cols())
 	{
@@ -22,7 +22,7 @@ Eigen::VectorXf QPSolver<DataType>::solve(const Eigen::MatrixXf &H,
 	}
 	else 	return H.ldlt().solve(-f);                                                          // Too easy lol ᕙ(▀̿̿ĺ̯̿̿▀̿ ̿) ᕗ
 }
-
+/*
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
  //          Solve a constrained QP problem: min 0.5*x'*H*x + x'*f subject to: B*x >= z           //

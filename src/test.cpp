@@ -5,9 +5,17 @@
 
 int main(int argc, char *argv[])
 {
-	std::cout << "Worker bees can leave.\n";
-	std::cout << "Even drones can fly away.\n";
-	std::cout << "The Queen is their slave.\n";
+
+	unsigned int m = 5;
+	unsigned int n = 5;
+	
+	Eigen::MatrixXf H = Eigen::MatrixXf::Random(m,n);
+	
+	Eigen::VectorXf f = Eigen::VectorXf::Random(n);
+	
+	std::cout << QPSolver<float>::solve(H,f) << std::endl;
+	
+
 	
 /*	srand((unsigned int) time(0));					                            // Random seed generator
 	

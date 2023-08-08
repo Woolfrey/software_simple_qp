@@ -5,19 +5,19 @@
 #include <iostream>                                                                                 // std::cerr, std::cout
 #include <vector>                                                                                   // std::vector
 
-template <class DataType>
+template <class DataType = float>
 class QPSolver
 {
 	public:
-		QPSolver() : type(DataType) {}
+		QPSolver() {}
 		
-		template<typename Derived1, typename Derived2>
+		template <typename Derived1, typename Derived2>
 		static typename Derived2::Matrix solve(const Eigen::MatrixBase<Derived1> &H,
 		                                       const Eigen::MatrixBase<Derived2> &f);
 		
-	private:
 		
-		DataType type;
+	private:
+	
 	
 };                                                                                                  // Required after class declaration
 

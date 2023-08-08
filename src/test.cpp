@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 	
 	Eigen::VectorXf f = Eigen::VectorXf::Random(n);
 	
-	std::cout << QPSolver<>::solve(H,f) << std::endl;
+	std::cout << QPSolver<float>::solve(H,f) << std::endl;
 
 	
 /*	srand((unsigned int) time(0));					                            // Random seed generator

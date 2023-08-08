@@ -1,13 +1,5 @@
 #include <QPSolver.h>                                                                               // Declaration of functions
 
-template <class DataType>
-template <typename Derived1, typename Derived2>
-typename Derived2::Matrix QPSolver<DataType>::solve(const Eigen::MatrixBase<Derived1> &H,
-                                                    const Eigen::MatrixBase<Derived2> &f)
-{
-	return H.ldlt().solve(-f);
-}
-
 /*
   ///////////////////////////////////////////////////////////////////////////////////////////////////
  //                        Solve a generic QP problem min 0.5*x'*H*x + x'*f                       //

@@ -361,11 +361,11 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Matrix<DataType, Eige
 		
 		xn = alpha*xd;                                                                      // New desired vector
 		
-		f = y - A*xn;                                                                       // Linear component of QP
+		f = A*xn - y;                                                                       // Linear component of QP
 		
 		this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*(x0 - xn)));
 		
-		return this->lastSolution;	
+		return this->lastSolution;
 	}
 	else // primal; slower, but more robust
 	{

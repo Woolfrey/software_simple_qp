@@ -98,7 +98,14 @@ class QPSolver
 		int steps = 20;                                                                     // No. of steps to run interior point method
 		
 		Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> lastSolution;               // Can be used for future use
-
+		
+		DataType min(const DataType &a, const DataType &b)
+		{
+			DataType minimum = (a < b) ? a : b;                                         // std::min doesn't like floats ಠ_ಠ
+			
+			return minimum;
+		}
+		
 };                                                                                                  // Required after class declaration
 
 
@@ -201,7 +208,7 @@ QPSolver<DataType>::redundant_least_squares(const Eigen::Matrix<DataType, Eigen:
         {   		
 		Eigen::MatrixXf B = W.ldlt().solve(A.transpose());                                  // Makes calcs a little easier
 		
-		return xd - B*(A*B).ldlt().solve(y - A*xd);                                         // xd - W^-1*A'*(A*W^-1*A')^-1*(y-A*xd)
+		return xd + B*(A*B).ldlt().solve(y - A*xd);                                         // xd - W^-1*A'*(A*W^-1*A')^-1*(y-A*xd)
 	}
 }
 
@@ -348,15 +355,15 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Matrix<DataType, Eige
 		
 		for(int i = 0; i < n; i++)
 		{
-			     if(xn(i) >= xMax(i)) alpha = std::min(xMax(i)/(1.1*xn(i)), alpha);     // If over the limit, reduce alpha
-			else if(xn(i) <= xMin(i)) alpha = std::min(xMin(i)/(1.1*xn(i)), alpha);
+			     if(xn(i) >= xMax(i)) alpha = min(0.9*xMax(i)/xn(i), alpha);          // If over the limit, reduce alpha
+			else if(xn(i) <= xMin(i)) alpha = min(0.9*xMin(i)/xn(i), alpha);
 		}
 		
 		xn = alpha*xd;                                                                      // New desired vector
 		
 		f = y - A*xn;                                                                       // Linear component of QP
 		
-		this->lastSolution = xn - invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*(x0 - xn)));
+		this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*(x0 - xn)));
 		
 		return this->lastSolution;	
 	}
@@ -397,8 +404,10 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Matrix<DataType, Eige
 		Eigen::VectorXf startPoint(m+n);
 		startPoint.head(m) = (A*W.partialPivLu().inverse()*A.transpose()).partialPivLu().solve(A*xd - y);
 		startPoint.tail(n) = x0;
+		
+		this->lastSolution = solve(H,f,B,z,startPoint).tail(n);
 
-		return (solve(H,f,B,z,startPoint)).tail(n);                                         // Convert to standard form and solve
+		return this->lastSolution;                                                          // Convert to standard form and solve
 	}
 }
 

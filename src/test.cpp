@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 	
 	A = Eigen::MatrixXf::Random(m,n);
 	x.resize(n); x << -3, 5, -1, 4, 0;
-	y = A*Eigen::VectorXf::Random(n);
+	y = A*x;
 	
 	xMin = -5*Eigen::VectorXf::Ones(n);
 	xMax =  5*Eigen::VectorXf::Ones(n); xMax(1) = 2.7; xMax(3) = 3.6;                           // Manually override the limits
@@ -165,13 +165,13 @@ int main(int argc, char *argv[])
                   << "\nThe equivalent constraints here are:\n"
                   << "\n    B = [  I ]  z = [ xMax ]\n"
                   <<   "        [ -I ]      [ xMin ]\n"
-                  << "\n(I wrote this special case function because I am lazy.)\n";     
+                  << "\n(I wrote special function for this case because I am lazy.)\n";     
                   
         std::cout << "\nFor the following system of A:\n";
         
         std::cout << "\n" << A << std::endl;
         
-        std::cout << "\n and y (transposed():\n";
+        std::cout << "\n and y (transposed):\n";
         
         std::cout << "\n" << y.transpose() << std::endl;
         
@@ -220,13 +220,13 @@ int main(int argc, char *argv[])
 	
 	std::cout << "\nWe would call: 'solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0)'\n"
 	          << "\nThere are two options for this case:\n"
-	          << "   1. solver.use_dual() which is faster, but sensitive to initial guess x0, and\n"
-	          << "   2. solver.use_primal() which is slower, but robust.\n";
+	          << "\n  1. solver.use_dual() which is faster, but sensitive to initial guess x0, and\n"
+	          <<   "  2. solver.use_primal() which is slower, but robust.\n";
 	
 	std::cout << "\nHere is the solution for a " << m << "x" << n << " system using the dual method:\n";
 	
 	timer = clock();
-	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,xTrue);
+	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,0.5*(xMin + xMax));
 	timer = clock() - timer;
 	float t1  = (float)timer/CLOCKS_PER_SEC;
 	
@@ -236,7 +236,9 @@ int main(int argc, char *argv[])
 	comparison.col(2) = xMax;
 	std::cout << "\n" << comparison << std::endl;
 	
-	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
+	float error1 = (y - A*x).norm();
+	
+	std::cout << "\nThe error ||y - A*x|| is: " << error1 << ", "
 	          <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
 	
 	solver.use_primal();
@@ -248,14 +250,16 @@ int main(int argc, char *argv[])
 	timer = clock() - timer;
 	float t2  = (float)timer/CLOCKS_PER_SEC;
 	
+	float error2 = (y - A*x).norm();
+	
 	comparison.col(1) = x;
 	std::cout << "\n" << comparison << std::endl;
 	
-	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
+	std::cout << "\nThe error ||y - A*x|| is: " << error2 << ", "
 	          <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
 	          
-	
-	std::cout << "\nThe dual method was " << t2/t1 << " times faster.\n";
+	std::cout << "\nThe dual method was " << t2/t1 << " times faster. "
+	          << "The primal method was " << error1/error2 << " times more accurate.\n";
 	
 /*	srand((unsigned int) time(0));					                            // Random seed generator
 	

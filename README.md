@@ -18,13 +18,27 @@ where:
 
 There are also several functions for handling linear least squares problems with equality and inequality constraints.
 
+**Jump To:**
+- [Installation Instructions](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#installation-instructions)
+	- [Installing Eigen](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#installing-eigen)
+ 	- [Installing SimpleQPSolver](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#installing-simpleqpsolver)
+- [Using the QP Solver](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#using-the-qp-solver)
+  	- [A Generic QP Problem](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#a-generic-qp-problem)
+   	- [Linear Least Squares](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#linear-least-squares-linear-regression)
+   	- [Least Squares with Equality Constraints](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#least-squares-with-equality-constraints-over-determined-systems)
+   	 - [Optimisation with Inequality Constraints](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#optimisation-with-inequality-constraints)
+   	- [Options for the Interior Point Algorithm](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#options-for-the-interior-point-algorithm) 
+
 ## Installation Instructions
 
 ### Installing Eigen
 
+The `SimpleQPSolver` requires the `Eigen` libraries. If you're using Linux you can install it from the command line:
+
 ```
 sudo apt install libeigen3-dev
 ```
+Otherwise, you can head over to the [main page](https://eigen.tuxfamily.org/index.php?title=Main_Page) to see how you can install it.
 
 ### Installing SimpleQPSolver
 
@@ -35,9 +49,7 @@ SimpleQPSolver/include/QPSolver.h
 ```
 That is all!
 
-**If you want to build the package for some reason...**
-
-There is a simple `test.cpp` file you can run that demonstrates the use of the `QPSolver` class. First navigate to your working directory:
+_If you want to build the package for some reason..._ there is a simple `test.cpp` file you can run that demonstrates the use of the `QPSolver` class. First navigate to your working directory:
 
 ```
 cd ~/MyWorkspace
@@ -133,7 +145,6 @@ Eigen::VectorXd x = QPSolver<double>::redundant_least_squares(xd,W,A,y);
 	\text{subject to: } \mathbf{Bx} \le \mathbf{z}
 \end{align}
 ```
-
 For problems like this with inequality constraints, the solver uses an interior point algorithm. This uses Newton's method to iteratively minimize the objective function whilst satisfying the inequality. It therefore requires a _start point_ or _initial guess_:
 
 First create an object, then call the function:
@@ -149,6 +160,8 @@ Eigen::VectorXd x0 = solver.last_solution();
 ```
 There are several functions conveniently written for least squares type problems:
 
+**Linear least squares with upper and lower bounds:**
+
 ```math
 \begin{align}
 	\min_{\mathbf{x}} \frac{1}{2}\mathbf{\left(y - Ax\right)^\mathrm{T} W\left(y - Ax\right)} \\
@@ -157,9 +170,9 @@ There are several functions conveniently written for least squares type problems
 ```
 use:
 ```
-QPSolver<float> solver;
 Eigen::VectorXf x = solver.constrained_least_squares(y,A,W,xMin,xMax,x0);
 ```
+**Redundant least squares with upper and lower bounds:**
 
 ```math
 \begin{align}
@@ -170,9 +183,9 @@ Eigen::VectorXf x = solver.constrained_least_squares(y,A,W,xMin,xMax,x0);
 ```
 use:
 ```
-QPSolver<double> solver;
 Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0);
 ```
+**Redundant least squares with inequality constraints:**
 
 ```math
 \begin{align}
@@ -183,16 +196,18 @@ Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0);
 ```
 use:
 ```
-QPSolver<double> solver;
 Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0);
 ```
+:warning: When using the dual method for this problem, the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
 
 ### Options for the Interior Point Algorithm
 
 There are several parameters that can be set when solving for inequality constaints:
+- `use_dual()`: This is the default method for _redundant, constrained least squares_ methods. The solver is sensitive to the start point `x0`.
+- `use_primal()`: This an alternative method for _redundant, constrained least squares_. It is slower than the dual method, but a little bit more robust.
 - `set_step_size(const DataType &size)`: The parameter $\alpha$ scales the step size $\alpha\cdot\Delta\mathbf{x}$. Default value is 1; a smaller size will mean slower convergence.
-- `set_tolernace(const DataType &tolerance)`: The algorithm terminates when $\|\alpha\cdot\Delta\mathbf{x}\|$ is less than this value. A smaller value means a more accurate solution, but slower solution time.
+- `set_tolerance(const DataType &tolerance)`: The algorithm terminates when $\|\alpha\cdot\Delta\mathbf{x}\|$ is less than this value. A smaller value means a more accurate solution, but slower solution time.
 - `set_num_steps(const unsigned int &numer)`: The algorithm terminates if this number of steps is reached. A higher value means a more accurate solution, but it might take longer to solve.
-- `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
+- `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
 - `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
 

@@ -4,7 +4,7 @@ A small, efficient class for solving convex optimisation problems.
 A generic quadratic programming (QP) problem is of the form:
 ```math
 \begin{align}
-	\min_{\mathbf{x}} ~ \frac{1}{2}\mathbf{x^\mathrm{T}Hx - x^\mathrm{T}f} \\
+	\min_{\mathbf{x}} ~ \frac{1}{2}\mathbf{x^\mathrm{T}Hx + x^\mathrm{T}f} \\
 	\text{subject to: } \mathbf{Bx \le z}
 \end{align}
 
@@ -18,7 +18,7 @@ where:
 
 There are also several functions for handling linear least squares problems with equality and inequality constraints.
 
-## Installing Instructions
+## Installation Instructions
 
 ### Installing Eigen
 
@@ -45,7 +45,7 @@ git clone https://github.com/Woolfrey/SimpleQPSolver.git
 ```
 Create a build folder and navigate to it:
 ```
-mkdir build && cd build
+cd SimpleQPSolver/ && mkdir build && cd build
 ```
 Generate the build tools using:
 ```
@@ -62,3 +62,20 @@ You can then run
 which prints information about the use of different class methods, as well as the accuracy and speed of solutions.
 
 ## Using the QP Solver
+
+You can use `float` or `double` with this class.
+
+Input arguments for the `Eigen` classes must match:
+- `Eigen::MatrixXf` and `Eigen::VectorXf` when using `QPSolver<float>`, or
+- `Eigen::MatrixXd` and `Eigen::VectorXd` when using `QPSolver<double>`.
+
+### A Generic QP Problem
+
+### Linear Least Squares (Linear Regression)
+
+### Least Squares with Equality Constraints (Over-determined Systems)
+
+### Optimisation with Inequality Constraints
+
+### Options for the Interior Point Algorithm
+

@@ -16,7 +16,7 @@ where:
 
 There are also several functions for handling linear least squares problems with equality and inequality constraints.
 
-If you find this software useful, please [cite it].
+`SimpleQPSolver` is **free to use** under the GNU General Public License v3.0. If you find this software useful, please [cite it](#citing-this-repository).
 
 **Jump To:**
 - [Installation Instructions](#installation-instructions)
@@ -215,6 +215,13 @@ There are several parameters that can be set when solving for inequality constai
 ### Citing this Repository
 If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
 ```
-@software{Woolfrey_SimpleQPSolver_2023,author = {Woolfrey, Jon},month = aug,title = {{SimpleQPSolver}},url = {https://github.com/Woolfrey/SimpleQPSolver},version = {1.0.0},year = {2023}}
+@software{Woolfrey_SimpleQPSolver_2023,
+     author  = {Woolfrey, Jon},
+     month   = aug,
+     title   = {{SimpleQPSolver}},
+     url     = {https://github.com/Woolfrey/SimpleQPSolver},
+     version = {1.0.0},
+     year    = {2023}
+}
 ```
 Alternatively, click on `Cite this repository` on the top-right corner of this page.

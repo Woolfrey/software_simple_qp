@@ -1,7 +1,5 @@
 # SimpleQPSolver
-A small, efficient class for solving convex optimisation problems.
-
-A generic quadratic programming (QP) problem is of the form:
+A small, efficient class for solving convex optimisation problems. A generic quadratic programming (QP) problem is of the form:
 ```math
 \begin{align}
 	\min_{\mathbf{x}} ~ \frac{1}{2}\mathbf{x^\mathrm{T}Hx + x^\mathrm{T}f} \\
@@ -18,6 +16,8 @@ where:
 
 There are also several functions for handling linear least squares problems with equality and inequality constraints.
 
+If you find this software useful, please [cite it].
+
 **Jump To:**
 - [Installation Instructions](#installation-instructions)
 	- [Installing Eigen](#installing-eigen)
@@ -27,7 +27,8 @@ There are also several functions for handling linear least squares problems with
    	- [Linear Least Squares](#linear-least-squares-linear-regression)
    	- [Least Squares with Equality Constraints](#least-squares-with-equality-constraints-over-determined-systems)
    	 - [Optimisation with Inequality Constraints](#optimisation-with-inequality-constraints)
-   	- [Options for the Interior Point Algorithm](#options-for-the-interior-point-algorithm) 
+   	- [Options for the Interior Point Algorithm](#options-for-the-interior-point-algorithm)
+- [Citing this Repository](#citing-this-repository)
 
 ## Installation Instructions
 
@@ -211,3 +212,9 @@ There are several parameters that can be set when solving for inequality constai
 - `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
 - `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
 
+### Citing this Repository
+If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
+```
+@software{Woolfrey_SimpleQPSolver_2023,author = {Woolfrey, Jon},month = aug,title = {{SimpleQPSolver}},url = {https://github.com/Woolfrey/SimpleQPSolver},version = {1.0.0},year = {2023}}
+```
+Alternatively, click on `Cite this repository` on the top-right corner of this page.

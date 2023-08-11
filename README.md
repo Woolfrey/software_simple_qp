@@ -212,7 +212,7 @@ There are several parameters that can be set when solving for inequality constai
 - `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
 - `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
 
-### Citing this Repository
+## Citing this Repository
 If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
 ```
 @software{Woolfrey_SimpleQPSolver_2023,

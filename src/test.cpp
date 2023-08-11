@@ -1,3 +1,15 @@
+/**
+ * @file  : test.cpp
+ * @author: Jon Woolfrey
+ * @date  : August 2023
+ * @brief : Executable for demonstrating and testing the QPSolver class.
+ *
+ * This software is publicly available under the GNU General Public License V3.0. You are free to
+ * use it and modify it as you see fit. If you find it useful, please acknowledge it.
+ *
+ * @see https://github.com/Woolfrey/SimpleQPSolver
+ */
+
 #include <iostream>                                                                                 // std::cout
 #include <fstream>                                                                                  // std::ofstream
 #include <QPSolver.h>                                                                               // Custom cass

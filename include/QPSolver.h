@@ -1,3 +1,15 @@
+/**
+ * @file  : QPSolver.h
+ * @author: Jon Woolfrey
+ * @date  : August 2023
+ * @brief : Header file containing template class.
+ *
+ * This software is publicly available under the GNU General Public License V3.0. You are free to
+ * use it and modify it as you see fit. If you find it useful, please acknowledge it.
+ *
+ * @see https://github.com/Woolfrey/SimpleQPSolver
+ */
+
 #ifndef QPSOLVER_H_
 #define QPSOLVER_H_
 
@@ -10,8 +22,7 @@ class QPSolver
 {
 	public:
 		QPSolver() {}
-		
-		
+			
 		// These methods can be called without creating an object of this class
 		
 		static Eigen::Matrix<DataType, Eigen::Dynamic, 1>

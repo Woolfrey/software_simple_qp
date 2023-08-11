@@ -19,15 +19,15 @@ where:
 There are also several functions for handling linear least squares problems with equality and inequality constraints.
 
 **Jump To:**
-- [Installation Instructions](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#installation-instructions)
-	- [Installing Eigen](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#installing-eigen)
- 	- [Installing SimpleQPSolver](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#installing-simpleqpsolver)
-- [Using the QP Solver](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#using-the-qp-solver)
-  	- [A Generic QP Problem](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#a-generic-qp-problem)
-   	- [Linear Least Squares](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#linear-least-squares-linear-regression)
-   	- [Least Squares with Equality Constraints](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#least-squares-with-equality-constraints-over-determined-systems)
-   	 - [Optimisation with Inequality Constraints](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#optimisation-with-inequality-constraints)
-   	- [Options for the Interior Point Algorithm](https://github.com/Woolfrey/SimpleQPSolver/tree/devel#options-for-the-interior-point-algorithm) 
+- [Installation Instructions](#installation-instructions)
+	- [Installing Eigen](#installing-eigen)
+ 	- [Installing SimpleQPSolver](#installing-simpleqpsolver)
+- [Using the QP Solver](#using-the-qp-solver)
+  	- [A Generic QP Problem](#a-generic-qp-problem)
+   	- [Linear Least Squares](#linear-least-squares-linear-regression)
+   	- [Least Squares with Equality Constraints](#least-squares-with-equality-constraints-over-determined-systems)
+   	 - [Optimisation with Inequality Constraints](#optimisation-with-inequality-constraints)
+   	- [Options for the Interior Point Algorithm](#options-for-the-interior-point-algorithm) 
 
 ## Installation Instructions
 

@@ -5,7 +5,6 @@ A small, efficient class for solving convex optimisation problems. A generic qua
 	\min_{\mathbf{x}} ~ \frac{1}{2}\mathbf{x^\mathrm{T}Hx + x^\mathrm{T}f} \\
 	\text{subject to: } \mathbf{Bx \le z}
 \end{align}
-
 ```
 where:
 - $\mathbf{x}\in\mathbb{R}^\mathrm{n}$ is the decision variable,
@@ -115,7 +114,7 @@ where:
 - $\mathbf{A}\in\mathbb{R}^\mathrm{m\times n}$,
 - $\mathbf{x}\in\mathbb{R}^\mathrm{n}$,
 - $\mathbf{W}\in\mathbb{R}^\mathrm{m\times m}$ weights the error, and
-- m >= n (more outputs than inputs)
+- m $\ge$ n (more outputs than inputs)
 
 Call:
 ```
@@ -229,6 +228,10 @@ If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could c
      version = {1.0.0},
      year    = {2023}
 }
+```
+Here's the automatically generated APA format:
+```
+Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/SimpleQPSolver
 ```
 Alternatively, click on `Cite this repository` on the top-right corner of this page.
 

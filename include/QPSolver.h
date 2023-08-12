@@ -123,7 +123,7 @@ class QPSolver
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //              Solve a standard QP problem of the form min 0.5*x'*H*x + x'*f                     //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class DataType>
+template <class DataType> inline
 Eigen::Matrix<DataType, Eigen::Dynamic, 1>
 QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &H,
 		          const Eigen::Matrix<DataType, Eigen::Dynamic, 1>              &f)
@@ -147,7 +147,7 @@ QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::D
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //           Solve an unconstrained least squares problem: min 0.5(y-A*x)'*W*(y-A*x)              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class DataType>
+template <class DataType> inline
 Eigen::Matrix<DataType, Eigen::Dynamic, 1>
 QPSolver<DataType>::least_squares(const Eigen::Matrix<DataType, Eigen::Dynamic, 1>              &y,
                                   const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
@@ -180,7 +180,7 @@ QPSolver<DataType>::least_squares(const Eigen::Matrix<DataType, Eigen::Dynamic, 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //    Solve least squares problem of the form min 0.5*(xd - x)'*W*(xd - x) subject to: A*x = y    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class DataType>
+template <class DataType> inline
 Eigen::Matrix<DataType, Eigen::Dynamic, 1>
 QPSolver<DataType>::redundant_least_squares(const Eigen::Matrix<DataType, Eigen::Dynamic, 1>              &xd,
                                             const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W,
@@ -226,7 +226,7 @@ QPSolver<DataType>::redundant_least_squares(const Eigen::Matrix<DataType, Eigen:
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //      Solve a constrained problem: min 0.5*(y - A*x)'*W*(y - A*x) s.t. xMin <= x <= xMax        //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class DataType>
+template <class DataType> inline
 Eigen::Matrix<DataType, Eigen::Dynamic, 1>
 QPSolver<DataType>::constrained_least_squares(const Eigen::Matrix<DataType, Eigen::Dynamic, 1>              &y,
                                               const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
@@ -281,7 +281,7 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Matrix<DataType, Eige
   ////////////////////////////////////////////////////////////////////////////////////////////////////
  //         Solve a constrained problem min 0.5*(xd - x)'*W*(xd - x) s.t. A*x = y, B*x <= z        //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-template <class DataType>
+template <class DataType> inline
 Eigen::Matrix<DataType, Eigen::Dynamic, 1>
 QPSolver<DataType>::constrained_least_squares(const Eigen::Matrix<DataType, Eigen::Dynamic, 1>              &xd,
                                               const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W,
@@ -425,7 +425,7 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Matrix<DataType, Eige
   ///////////////////////////////////////////////////////////////////////////////////////////////////
  //          Solve a problem of the form: min 0.5*x'*H*x + x'*f subject to: B*x <= z              //        
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-template <class DataType>
+template <class DataType> inline
 Eigen::Matrix<DataType, Eigen::Dynamic, 1>
 QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &H,
                           const Eigen::Matrix<DataType, Eigen::Dynamic, 1>              &f,
@@ -475,7 +475,7 @@ QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::D
 	DataType alpha;                                                                             // Scalar on the Newton step
 	
 	Eigen::Matrix<DataType, Eigen::Dynamic, 1> g(dim);                                          // Gradient vector
-	Eigen::Matrix<DataType, Eigen::Dynamic, 1> x = x0;                                          // Assign initial state variable
+	Eigen::Matrix<DataType, Eigen::Dynamic, 1> x ;                                              // Assign initial state variable
 	Eigen::Matrix<DataType, Eigen::Dynamic, 1> dx(dim);                                         // Newton step = -I^-1*g
 	Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> I;                                  // Hessian with added barrier function
 
@@ -485,11 +485,20 @@ QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::D
 	std::vector<Eigen::Matrix<DataType,Eigen::Dynamic,1>> bt(numConstraints);                   // Row vectors of B matrix transposed
 	std::vector<Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic>> btb(numConstraints);     // Outer product of row vectors
 	
+	DataType scalar = 1.0;
+	
 	for(int j = 0; j < numConstraints; j++)
 	{
 		bt[j]  = B.row(j).transpose();                                                      // Row vector converted to column vector
 		btb[j] = B.row(j).transpose()*B.row(j);                                             // Outer product of row vectors
+	
+//		DataType dotProduct = bt[j].dot(x0);                                                // Makes calcs a little easier		
+//		if(z(j) - dotProduct <= 0) scalar = min(0.9*z(j)/dotProduct, scalar);
 	}
+	
+//	std::cout << "Scalar: " << scalar << std::endl;
+	
+	x = scalar*x0;
 	
 	// Run the interior point algorithm
 	for(int i = 0; i < this->steps; i++)

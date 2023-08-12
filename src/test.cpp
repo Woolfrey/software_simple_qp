@@ -200,6 +200,15 @@ int main(int argc, char *argv[])
 	comparison.col(1) = x;
 	comparison.col(2) = xMax;
 	std::cout << "\n" << comparison << std::endl;
+	
+	for(int i = 0; i < x.size(); i++)
+	{
+		if(x(i) <= xMin(i) or x(i) >= xMax(i))
+		{
+			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
+			break;
+		}
+	}
 
 	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
 	          <<   "and it took " << t*1000 << " ms to solve (" << 1/t << " Hz).\n";
@@ -250,6 +259,15 @@ int main(int argc, char *argv[])
 	comparison.col(1) = x;
 	comparison.col(2) = xMax;
 	std::cout << "\n" << comparison << std::endl;
+	
+	for(int i = 0; i < x.size(); i++)
+	{
+		if(x(i) <= xMin(i) or x(i) >= xMax(i))
+		{
+			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
+			break;
+		}
+	}
 	
 	float error1 = (y - A*x).norm();
 	

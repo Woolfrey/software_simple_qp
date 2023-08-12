@@ -233,6 +233,8 @@ int main(int argc, char *argv[])
 	
 	Eigen::VectorXf xd = 10*Eigen::VectorXf::Random(n);
 	
+	Eigen::VectorXf x0 = 10*Eigen::VectorXf::Random(n);
+	
 	std::cout << "\nWe can even solve redundant systems subject to constraint:\n"
 	          << "\n      min 0.5*(xd - x)'*W*(xd - x)\n"
 	          << "     subject to: A*x = y\n"
@@ -242,15 +244,12 @@ int main(int argc, char *argv[])
 	          << "bounds on the solution:\n"
 	          << "\n      B*x <= z  <--->  xMin <= x <= xMax\n";
 	
-	std::cout << "\nWe would call: 'solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0)'\n"
-	          << "\nThere are two options for this case:\n"
-	          << "\n  1. solver.use_dual() which is faster, but sensitive to initial guess x0, and\n"
-	          <<   "  2. solver.use_primal() which is slower, but (usually) more robust.\n";
+	std::cout << "\nWe would call: 'solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0)'\n";
 	
 	std::cout << "\nHere is the solution for a " << m << "x" << n << " system using the dual method:\n";
 	
 	timer = clock();
-	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,0.5*(xMin + xMax));
+	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
 	timer = clock() - timer;
 	float t1  = (float)timer/CLOCKS_PER_SEC;
 	
@@ -273,13 +272,15 @@ int main(int argc, char *argv[])
 	
 	std::cout << "\nThe error ||y - A*x|| is: " << error1 << ", "
 	          <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
-	
+
+/*	I've deactivated the primal method because the dual is better
+
 	solver.use_primal();
 	
 	std::cout << "\nUsing the primal method we get:\n";
 
 	timer = clock();
-	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,0.5*(xMin+xMax));
+	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
 	timer = clock() - timer;
 	float t2  = (float)timer/CLOCKS_PER_SEC;
 	
@@ -293,6 +294,6 @@ int main(int argc, char *argv[])
 	          
 	std::cout << "\nThe dual method was " << t2/t1 << " times faster. "
 	          << "The primal method was " << error1/error2 << " times more accurate.\n";
-	          
+*/         
 	return 0; 
 }

@@ -200,15 +200,13 @@ use:
 ```
 Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0);
 ```
-:warning: When using the dual method for this problem, the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
+:warning: When using this particular function the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
 
 :arrow_backward: [Go Back.](#simpleqpsolver)
 
 ### Options for the Interior Point Algorithm
 
 There are several parameters that can be set when solving for inequality constaints:
-- `use_dual()`: This is the default method for _redundant, constrained least squares_ methods. The solver is sensitive to the start point `x0`.
-- `use_primal()`: This an alternative method for _redundant, constrained least squares_. It is slower than the dual method, but a little bit more robust.
 - `set_step_size(const DataType &size)`: The parameter $\alpha$ scales the step size $\alpha\cdot\Delta\mathbf{x}$. Default value is 1; a smaller size will mean slower convergence.
 - `set_tolerance(const DataType &tolerance)`: The algorithm terminates when $\|\alpha\cdot\Delta\mathbf{x}\|$ is less than this value. A smaller value means a more accurate solution, but slower solution time.
 - `set_num_steps(const unsigned int &numer)`: The algorithm terminates if this number of steps is reached. A higher value means a more accurate solution, but it might take longer to solve.

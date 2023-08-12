@@ -16,7 +16,7 @@ where:
 
 There are also several functions for handling linear least squares problems with equality and inequality constraints.
 
-`SimpleQPSolver` is **free to use** under the GNU General Public License v3.0. If you find this software useful, please [cite it](#citing-this-repository).
+`SimpleQPSolver` is **free to use** under the GNU General Public License v3.0. If you find this software useful, [citing it](#citing-this-repository) would be appreciated.
 
 **Jump To:**
 - [Installation Instructions](#installation-instructions)
@@ -77,6 +77,8 @@ You can then run
 ```
 which prints information about the use of different class methods, as well as the accuracy and speed of solutions.
 
+:arrow_backward: [Go Back.](#simpleqpsolver)
+
 ## Using the QP Solver
 
 You can use `float` or `double` with this class. Input arguments for the `Eigen` classes must match:
@@ -122,8 +124,8 @@ Eigen::VectorXf x = QPSolver<float>::least_squares(y,A,W);
 ### Least Squares with Equality Constraints (Over-determined Systems)
 ```math
 \begin{align}
-\min_{\mathbf{x}} \frac{1}{2}\|\mathbf{x_\mathrm{d} - x}\|^2_\mathrm{W} &= \frac{1}{2}\mathbf{\left(x_\mathrm{d} - x\right)^\mathrm{T} W\left(x_\mathrm{d} - x\right)} \\
-\text{subject to: } \mathbf{Ax} &= \mathbf{y}
+\min_{\mathbf{x}} \frac{1}{2}\|\mathbf{x_\mathrm{d} - x}\|^2_\mathrm{W} = \frac{1}{2}\mathbf{\left(x_\mathrm{d} - x\right)^\mathrm{T} W\left(x_\mathrm{d} - x\right)} \\
+\text{subject to: } \mathbf{Ax} = \mathbf{y}
 \end{align}
 ```
 where:
@@ -178,8 +180,8 @@ Eigen::VectorXf x = solver.constrained_least_squares(y,A,W,xMin,xMax,x0);
 ```math
 \begin{align}
 	\min_{\mathbf{x}} \frac{1}{2}\mathbf{\left(x_\mathrm{d} - x\right)^\mathrm{T} W\left(x_\mathrm{d} - x\right)} \\
-	\text{subject to: } \mathbf{Ax} &= \mathbf{y} \\
-\mathbf{x_\mathrm{min} \le x \le x_\mathrm{max}}
+	\text{subject to: } \mathbf{Ax} = \mathbf{y} \\
+            \mathbf{x_\mathrm{min} \le x \le x_\mathrm{max}}
 \end{align}
 ```
 use:
@@ -191,8 +193,8 @@ Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0);
 ```math
 \begin{align}
 	\min_{\mathbf{x}} \frac{1}{2}\mathbf{\left(x_\mathrm{d} - x\right)^\mathrm{T} W\left(x_\mathrm{d} - x\right)} \\
-	\text{subject to: } \mathbf{Ax} &= \mathbf{y} \
-	\mathbf{Bx} \le \mathbf{z}
+	\text{subject to: } \mathbf{Ax} &= \mathbf{y} \\
+                          \mathbf{Bx} &\le \mathbf{z}
 \end{align}
 ```
 use:
@@ -200,6 +202,8 @@ use:
 Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0);
 ```
 :warning: When using the dual method for this problem, the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
+
+:arrow_backward: [Go Back.](#simpleqpsolver)
 
 ### Options for the Interior Point Algorithm
 
@@ -211,6 +215,8 @@ There are several parameters that can be set when solving for inequality constai
 - `set_num_steps(const unsigned int &numer)`: The algorithm terminates if this number of steps is reached. A higher value means a more accurate solution, but it might take longer to solve.
 - `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
 - `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
+
+:arrow_backward: [Go Back.](#simpleqpsolver)
 
 ## Citing this Repository
 If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
@@ -225,3 +231,5 @@ If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could c
 }
 ```
 Alternatively, click on `Cite this repository` on the top-right corner of this page.
+
+:arrow_backward: [Go Back.](#simpleqpsolver)

@@ -272,6 +272,8 @@ int main(int argc, char *argv[])
 	
 	std::cout << "\nThe error ||y - A*x|| is: " << error1 << ", "
 	          <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
+	          
+	std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n";
 
 /*	I've deactivated the primal method because the dual is better
 

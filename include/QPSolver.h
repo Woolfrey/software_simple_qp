@@ -17,8 +17,8 @@
 #include <iostream>                                                                                 // cerr, cout
 #include <vector>                                                                                   // vector
 
-using namespace Eigen; // Eigen::Dynamic, Eigen::Matrix
-using namespace std;   // std::invalid_argument, std::to_string
+using namespace Eigen;                                                                              // Eigen::Dynamic, Eigen::Matrix
+using namespace std;                                                                                // std::invalid_argument, std::to_string
 
 template <class DataType = float>
 class QPSolver
@@ -28,56 +28,56 @@ class QPSolver
 			
 		// These methods can be called without creating an object of this class
 		
-		static Matrix<DataType, Dynamic, 1>
+		static Vector<DataType,Dynamic>
 		solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-                      const Matrix<DataType, Dynamic, 1>       &f);
+                      const Vector<DataType,Dynamic>           &f);
 	
 		                                      
-		static Matrix<DataType, Dynamic, 1>
-		least_squares(const Matrix<DataType, Dynamic, 1>       &y,
+		static Vector<DataType,Dynamic>
+		least_squares(const Vector<DataType,Dynamic>           &y,
 			      const Matrix<DataType, Dynamic, Dynamic> &A,
 			      const Matrix<DataType, Dynamic, Dynamic> &W);
 
-		static Matrix<DataType, Dynamic, 1>
-		redundant_least_squares(const Matrix<DataType, Dynamic, 1>       &xd,
+		static Vector<DataType,Dynamic>
+		redundant_least_squares(const Vector<DataType,Dynamic>           &xd,
 		                        const Matrix<DataType, Dynamic, Dynamic> &W,
 		                        const Matrix<DataType, Dynamic, Dynamic> &A,
-		                        const Matrix<DataType, Dynamic, 1>       &y);
+		                        const Vector<DataType,Dynamic>           &y);
 		                                                         
 		// These methods require an object since they rely on the interior point solver
 		
-		Matrix<DataType, Dynamic, 1>
-		constrained_least_squares(const Matrix<DataType, Dynamic, 1>       &y,
+		Vector<DataType,Dynamic>
+		constrained_least_squares(const Vector<DataType,Dynamic>           &y,
 		                          const Matrix<DataType, Dynamic, Dynamic> &A,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
-		                          const Matrix<DataType, Dynamic, 1>       &xMin,
-		                          const Matrix<DataType, Dynamic, 1>       &xMax,
-		                          const Matrix<DataType, Dynamic, 1>       &x0);
+		                          const Vector<DataType,Dynamic>           &xMin,
+		                          const Vector<DataType,Dynamic>           &xMax,
+		                          const Vector<DataType,Dynamic>           &x0);
 		                                        
-		Matrix<DataType, Dynamic, 1>
-		constrained_least_squares(const Matrix<DataType, Dynamic, 1>       &xd,
+		Vector<DataType,Dynamic>
+		constrained_least_squares(const Vector<DataType,Dynamic>           &xd,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
 		                          const Matrix<DataType, Dynamic, Dynamic> &A,
-		                          const Matrix<DataType, Dynamic, 1>       &y,
-		                          const Matrix<DataType, Dynamic, 1>       &xMin,
-		                          const Matrix<DataType, Dynamic, 1>       &xMax,
-		                          const Matrix<DataType, Dynamic, 1>       &x0);
+		                          const Vector<DataType,Dynamic>           &y,
+		                          const Vector<DataType,Dynamic>           &xMin,
+		                          const Vector<DataType,Dynamic>           &xMax,
+		                          const Vector<DataType,Dynamic>           &x0);
 		
-		Matrix<DataType, Dynamic, 1>
-		constrained_least_squares(const Matrix<DataType, Dynamic, 1>       &xd,
+		Vector<DataType,Dynamic>
+		constrained_least_squares(const Vector<DataType,Dynamic>           &xd,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
 		                          const Matrix<DataType, Dynamic, Dynamic> &A,
-		                          const Matrix<DataType, Dynamic, 1>       &y,
+		                          const Vector<DataType,Dynamic>           &y,
 		                          const Matrix<DataType, Dynamic, Dynamic> &B,
-		                          const Matrix<DataType, Dynamic, 1>       &z,
-		                          const Matrix<DataType, Dynamic, 1>       &x0);
+		                          const Vector<DataType,Dynamic>           &z,
+		                          const Vector<DataType,Dynamic>           &x0);
 		
-		Matrix<DataType, Dynamic, 1>  
+		Vector<DataType,Dynamic>  
 		solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-		      const Matrix<DataType, Dynamic, 1>       &f,
+		      const Vector<DataType,Dynamic>           &f,
 		      const Matrix<DataType, Dynamic, Dynamic> &B,
-		      const Matrix<DataType, Dynamic, 1>       &z,
-		      const Matrix<DataType, Dynamic, 1>       &x0);
+		      const Vector<DataType,Dynamic>           &z,
+		      const Vector<DataType,Dynamic>           &x0);
 		      
 		// Methods for setting properties in the interior point solver
 		
@@ -91,26 +91,30 @@ class QPSolver
 		
 		bool set_barrier_reduction_rate(const DataType &rate);
 		
-		Matrix<DataType, Dynamic, Dynamic> last_solution() const { return this->lastSolution; }
+		unsigned int num_steps() const { return this->numSteps; }
 		
-		void clear_last_solution() { this->lastSolution.clear(); }
+		Vector<DataType, Dynamic> last_solution() const { return this->lastSolution; }
+		
+		void clear_last_solution() { this->lastSolution.resize(0); }
 		
 	private:
 		
 		// These are variables used by the interior point method:
 		
 		DataType alpha0 = 1.0;                                                              // Scalar for Newton step
-		DataType beta   = 0.01;                                                             // Rate of decreasing barrier function
+		DataType beta   = 0.1;                                                              // Rate of decreasing barrier function
 		DataType tol    = 5e-1;                                                             // Tolerance on step size
 		DataType u0     = 100;                                                              // Scalar on barrier function
 		
-		int steps = 20;                                                                     // No. of steps to run interior point method
+		unsigned int steps = 20;                                                            // No. of steps to run interior point method
 		
-		Matrix<DataType, Dynamic, Dynamic> lastSolution;                                    // Can be used for future use
+		unsigned int numSteps = 0;                                                          // Number of steps taken to compute a solution
+		
+		Vector<DataType,Dynamic> lastSolution;                                              // Can be used for future use
 		
 		DataType min(const DataType &a, const DataType &b)
 		{
-			DataType minimum = (a < b) ? a : b;                                         // min doesn't like floats ಠ_ಠ
+			DataType minimum = (a < b) ? a : b;                                         // std::min doesn't like floats ಠ_ಠ
 			return minimum;
 		}
 		
@@ -120,9 +124,9 @@ class QPSolver
  //              Solve a standard QP problem of the form min 0.5*x'*H*x + x'*f                     //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
-Matrix<DataType, Dynamic, 1>
+Vector<DataType,Dynamic>
 QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-		          const Matrix<DataType, Dynamic, 1>       &f)
+		          const Vector<DataType, Dynamic>          &f)
 {
 	if(H.rows() != H.cols())
 	{
@@ -144,8 +148,8 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
  //           Solve an unconstrained least squares problem: min 0.5(y-A*x)'*W*(y-A*x)              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
-Matrix<DataType, Dynamic, 1>
-QPSolver<DataType>::least_squares(const Matrix<DataType, Dynamic, 1>       &y,
+Vector<DataType,Dynamic>
+QPSolver<DataType>::least_squares(const Vector<DataType, Dynamic>          &y,
                                   const Matrix<DataType, Dynamic, Dynamic> &A,
                                   const Matrix<DataType, Dynamic, Dynamic> &W)
 {
@@ -177,11 +181,11 @@ QPSolver<DataType>::least_squares(const Matrix<DataType, Dynamic, 1>       &y,
  //    Solve least squares problem of the form min 0.5*(xd - x)'*W*(xd - x) subject to: A*x = y    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
-Matrix<DataType, Dynamic, 1>
-QPSolver<DataType>::redundant_least_squares(const Matrix<DataType, Dynamic, 1>       &xd,
+Vector<DataType,Dynamic>
+QPSolver<DataType>::redundant_least_squares(const Vector<DataType, Dynamic>          &xd,
                                             const Matrix<DataType, Dynamic, Dynamic> &W,
                                             const Matrix<DataType, Dynamic, Dynamic> &A,
-                                            const Matrix<DataType, Dynamic, 1>       &y)
+                                            const Vector<DataType, Dynamic>          &y)
 {
 	if(A.rows() >= A.cols())
 	{
@@ -223,13 +227,13 @@ QPSolver<DataType>::redundant_least_squares(const Matrix<DataType, Dynamic, 1>  
  //      Solve a constrained problem: min 0.5*(y - A*x)'*W*(y - A*x) s.t. xMin <= x <= xMax        //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
-Matrix<DataType, Dynamic, 1>
-QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>       &y,
+Vector<DataType,Dynamic>
+QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>           &y,
                                               const Matrix<DataType, Dynamic, Dynamic> &A,
                                               const Matrix<DataType, Dynamic, Dynamic> &W,
-                                              const Matrix<DataType, Dynamic, 1>       &xMin,
-                                              const Matrix<DataType, Dynamic, 1>       &xMax,
-                                              const Matrix<DataType, Dynamic, 1>       &x0)
+                                              const Vector<DataType,Dynamic>           &xMin,
+                                              const Vector<DataType,Dynamic>           &xMax,
+                                              const Vector<DataType,Dynamic>           &x0)
 {
 	// Check that the inputs are sound
 	if(y.rows() != A.rows() or A.rows() != W.rows())
@@ -281,14 +285,14 @@ QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>
  //    Solve a constrained problem min 0.5*(xd - x)'*W*(xd - x) s.t. A*x = y, xMin <= x <= xMax    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
-Matrix<DataType, Dynamic, 1>
-QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>       &xd,
+Vector<DataType,Dynamic>
+QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>           &xd,
                                               const Matrix<DataType, Dynamic, Dynamic> &W,
                                               const Matrix<DataType, Dynamic, Dynamic> &A,
-                                              const Matrix<DataType, Dynamic, 1>       &y,
-                                              const Matrix<DataType, Dynamic, 1>       &xMin,
-                                              const Matrix<DataType, Dynamic, 1>       &xMax,
-                                              const Matrix<DataType, Dynamic, 1>       &x0)
+                                              const Vector<DataType,Dynamic>           &y,
+                                              const Vector<DataType,Dynamic>           &xMin,
+                                              const Vector<DataType,Dynamic>           &xMax,
+                                              const Vector<DataType,Dynamic>           &x0)
 {
 	// Check that the dimensions of the inputs are sound
 	if(xd.size() != W.rows()    or W.rows()    != A.cols()
@@ -343,7 +347,7 @@ QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>
 	B.block(0,0,n,n).setIdentity();
 	B.block(n,0,n,n) = -B.block(0,0,n,n);
 	
-	Matrix<DataType, Dynamic, 1> z(2*n);                                                        // Constraint vector	
+	Vector<DataType,Dynamic> z(2*n);                                                            // Constraint vector	
 	z.head(n) =  xMax;
 	z.tail(n) = -xMin;
 	
@@ -362,7 +366,7 @@ QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>
 	
 	Vector<DataType,Dynamic> f = A*xn - y;                                                      // Linear component of QP
 	
-	this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*(x0 - xn)));
+	this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*x0));
 	
 	return this->lastSolution;
 }
@@ -371,14 +375,14 @@ QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>
  //        Solve a constrained problem min 0.5*(xd - x)'*W*(xd - x) s.t. A*x = y, B*x < z          //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
-Matrix<DataType, Dynamic, 1>
-QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>       &xd,
+Vector<DataType,Dynamic>
+QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>          &xd,
                                               const Matrix<DataType, Dynamic, Dynamic> &W,
                                               const Matrix<DataType, Dynamic, Dynamic> &A,
-                                              const Matrix<DataType, Dynamic, 1>       &y,
+                                              const Vector<DataType, Dynamic>          &y,
                                               const Matrix<DataType, Dynamic, Dynamic> &B,
-                                              const Matrix<DataType, Dynamic, 1>       &z,
-                                              const Matrix<DataType, Dynamic, 1>       &x0)
+                                              const Vector<DataType, Dynamic>          &z,
+                                              const Vector<DataType, Dynamic>          &x0)
 {
 	if(xd.size() = W.rows() or W.rows() != A.cols() or A.cols() != B.cols() or B.cols() != x0.size())
 	{
@@ -450,12 +454,12 @@ QPSolver<DataType>::constrained_least_squares(const Matrix<DataType, Dynamic, 1>
  //          Solve a problem of the form: min 0.5*x'*H*x + x'*f subject to: B*x <= z              //        
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
-Matrix<DataType, Dynamic, 1>
+Vector<DataType,Dynamic>
 QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-                          const Matrix<DataType, Dynamic, 1>       &f,
+                          const Vector<DataType,Dynamic>       &f,
                           const Matrix<DataType, Dynamic, Dynamic> &B,
-                          const Matrix<DataType, Dynamic, 1>       &z,
-                          const Matrix<DataType, Dynamic, 1>       &x0)
+                          const Vector<DataType,Dynamic>       &z,
+                          const Vector<DataType,Dynamic>       &x0)
 {
 	unsigned int dim = x0.rows();                                                               // Number of dimensions
 
@@ -498,9 +502,9 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 	DataType u;                                                                                 // Scalar for the barrier function
 	DataType alpha;                                                                             // Scalar on the Newton step
 	
-	Matrix<DataType, Dynamic, 1> g(dim);                                                        // Gradient vector
-	Matrix<DataType, Dynamic, 1> x = x0;                                                        // Value to be returned
-	Matrix<DataType, Dynamic, 1> dx(dim);                                                       // Newton step = -I^-1*g
+	Vector<DataType, Dynamic> g(dim);                                                           // Gradient vector
+	Vector<DataType, Dynamic> x = x0;                                                           // Value to be returned
+	Vector<DataType, Dynamic> dx(dim);                                                          // Newton step = -I^-1*g
 	Matrix<DataType, Dynamic, Dynamic> I;                                                       // Hessian with added barrier function
 
 	vector<DataType> d; d.resize(numConstraints);                                               // Distance to every constraint
@@ -579,6 +583,8 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 		// Update values for next loop
 		u *= beta;                                                                          // Decrease barrier function
 		x += alpha*dx;                                                                      // Increment state
+		
+		this->numSteps = i+1;                                                               // Save the number of steps taken
 	}
 		
 	this->lastSolution = x;                                                                     // Save this value for future use

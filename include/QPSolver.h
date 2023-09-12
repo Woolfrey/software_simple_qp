@@ -554,19 +554,9 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 		// Compute distance to each constraint
 		for(int j = 0; j < numConstraints; j++)
 		{
-			d[j] = z(j) - bt[j].dot(x);                                                 // Distance to the jth constraint
-			
-			/* Old code no longer necessary
-			if(d[j] <= 0)
-			{
-			//	if(i == 0) throw runtime_error("[ERROR] [QP SOLVER] solve(): Start point is outside the constraints.");
-				
-				u   *= 100;                                                         // Increase the barrier function
-				d[j] = 1e-04;                                                       // Set a small, non-zero value
-			}*/
-					
-			g += -(u/d[j])*bt[j];                                                       // Add up gradient vector
-			I +=  (u/(d[j]*d[j]))*btb[j];                                               // Add up Hessian
+			d[j] =   z(j) - bt[j].dot(x);                                               // Distance to the jth constraint	
+			g   += -(u/d[j])*bt[j];                                                     // Add up gradient vector
+			I   +=  (u/(d[j]*d[j]))*btb[j];                                             // Add up Hessian
 		}
 		
 		g += H*x + f;                                                                       // Finish summation of gradient vector
@@ -582,7 +572,7 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 			
 			if( alpha*dotProduct >= d[j] )                                              // If constraint violated on next step...
 			{
-				DataType temp = (d[j] - 1E-04)/dotProduct;                          // Compute optimal scalar to avoid constraint violation
+				DataType temp = 0.95*d[j]/dotProduct;                               // Compute optimal scalar to avoid constraint violation
 				
 				if(temp < alpha) alpha = temp;                                      // If smaller, override
 			}

@@ -20,6 +20,9 @@
 using namespace Eigen;                                                                              // Eigen::Dynamic, Eigen::Matrix
 using namespace std;                                                                                // std::invalid_argument, std::to_string
 
+
+
+
 template <class DataType = float>
 class QPSolver
 {
@@ -29,8 +32,8 @@ class QPSolver
 		// These methods can be called without creating an object of this class
 		
 		static Vector<DataType,Dynamic>
-		solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-                      const Vector<DataType,Dynamic>           &f);
+		solve(const Matrix<DataType, Dynamic, Dynamic>  &H,
+                      const Vector<DataType, Dynamic>           &f);
 	
 		                                      
 		static Vector<DataType,Dynamic>
@@ -39,49 +42,49 @@ class QPSolver
 			      const Matrix<DataType, Dynamic, Dynamic> &W);
 
 		static Vector<DataType,Dynamic>
-		redundant_least_squares(const Vector<DataType,Dynamic>           &xd,
+		redundant_least_squares(const Vector<DataType, Dynamic>          &xd,
 		                        const Matrix<DataType, Dynamic, Dynamic> &W,
 		                        const Matrix<DataType, Dynamic, Dynamic> &A,
-		                        const Vector<DataType,Dynamic>           &y);
+		                        const Vector<DataType, Dynamic>          &y);
 		                                                         
 		// These methods require an object since they rely on the interior point solver
 		
 		Vector<DataType,Dynamic>
-		constrained_least_squares(const Vector<DataType,Dynamic>           &y,
+		constrained_least_squares(const Vector<DataType, Dynamic>          &y,
 		                          const Matrix<DataType, Dynamic, Dynamic> &A,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
-		                          const Vector<DataType,Dynamic>           &xMin,
-		                          const Vector<DataType,Dynamic>           &xMax,
-		                          const Vector<DataType,Dynamic>           &x0);
+		                          const Vector<DataType, Dynamic>          &xMin,
+		                          const Vector<DataType, Dynamic>          &xMax,
+		                          const Vector<DataType, Dynamic>          &x0);
 		                                        
 		Vector<DataType,Dynamic>
-		constrained_least_squares(const Vector<DataType,Dynamic>           &xd,
+		constrained_least_squares(const Vector<DataType, Dynamic>          &xd,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
 		                          const Matrix<DataType, Dynamic, Dynamic> &A,
-		                          const Vector<DataType,Dynamic>           &y,
-		                          const Vector<DataType,Dynamic>           &xMin,
-		                          const Vector<DataType,Dynamic>           &xMax,
-		                          const Vector<DataType,Dynamic>           &x0);
+		                          const Vector<DataType, Dynamic>          &y,
+		                          const Vector<DataType, Dynamic>          &xMin,
+		                          const Vector<DataType, Dynamic>          &xMax,
+		                          const Vector<DataType, Dynamic>          &x0);
 		
 		Vector<DataType,Dynamic>
-		constrained_least_squares(const Vector<DataType,Dynamic>           &xd,
+		constrained_least_squares(const Vector<DataType, Dynamic>          &xd,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
 		                          const Matrix<DataType, Dynamic, Dynamic> &A,
-		                          const Vector<DataType,Dynamic>           &y,
+		                          const Vector<DataType, Dynamic>          &y,
 		                          const Matrix<DataType, Dynamic, Dynamic> &B,
-		                          const Vector<DataType,Dynamic>           &z,
-		                          const Vector<DataType,Dynamic>           &x0);
+		                          const Vector<DataType, Dynamic>          &z,
+		                          const Vector<DataType, Dynamic>          &x0);
 		
 		Vector<DataType,Dynamic>  
 		solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-		      const Vector<DataType,Dynamic>           &f,
+		      const Vector<DataType, Dynamic>          &f,
 		      const Matrix<DataType, Dynamic, Dynamic> &B,
-		      const Vector<DataType,Dynamic>           &z,
-		      const Vector<DataType,Dynamic>           &x0);
+		      const Vector<DataType, Dynamic>          &z,
+		      const Vector<DataType, Dynamic>          &x0);
 		      
 		// Methods for setting properties in the interior point solver
 		
-		bool set_step_size(const DataType &scalar);
+		bool set_step_scalar(const DataType &scalar);
 
 		bool set_tolerance(const DataType &tolerance);
 		
@@ -90,6 +93,8 @@ class QPSolver
 		bool set_barrier_scalar(const DataType &scalar);
 		
 		bool set_barrier_reduction_rate(const DataType &rate);
+		
+		DataType step_size() const { return this->stepSize; }
 		
 		unsigned int num_steps() const { return this->numSteps; }
 		
@@ -103,10 +108,12 @@ class QPSolver
 		
 		DataType alpha0 = 1.0;                                                              // Scalar for Newton step
 		DataType beta   = 0.1;                                                              // Rate of decreasing barrier function
-		DataType tol    = 5e-1;                                                             // Tolerance on step size
+		DataType tol    = 1e-4;                                                             // Tolerance on step size
 		DataType u0     = 100;                                                              // Scalar on barrier function
 		
-		unsigned int steps = 20;                                                            // No. of steps to run interior point method
+		DataType stepSize = 0.0;
+		
+		unsigned int maxSteps = 20;                                                         // No. of iterations to run interior point method
 		
 		unsigned int numSteps = 0;                                                          // Number of steps taken to compute a solution
 		
@@ -354,7 +361,7 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>    
 	// Ensure null space projection of the desired solution xd is feasible
 	Matrix<DataType,Dynamic,1> xn = xd - invWAt*Hdecomp.solve(A*xd);                            // xd projected on to null space of A matrix
 	
-	float alpha = 1.0;                                                                          // Scalar
+	DataType alpha = 1.0;                                                                       // Scalar
 	
 	for(int i = 0; i < n; i++)
 	{
@@ -447,7 +454,9 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 		}
 	}
 	
-	this->lastSolution = xn + invWAt*solve(H, A*xd - y, B*invWAt, z - B*xd, Hdecomp.solve(A*(x0 - xd)));	
+	this->lastSolution = xn + invWAt*solve(H, A*xd - y, B*invWAt, z - B*xd, Hdecomp.solve(A*(x0 - xd)));
+	
+	return this->lastSolution;
 }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -456,10 +465,10 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 template <class DataType> inline
 Vector<DataType,Dynamic>
 QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-                          const Vector<DataType,Dynamic>       &f,
+                          const Vector<DataType,Dynamic>           &f,
                           const Matrix<DataType, Dynamic, Dynamic> &B,
-                          const Vector<DataType,Dynamic>       &z,
-                          const Vector<DataType,Dynamic>       &x0)
+                          const Vector<DataType,Dynamic>           &z,
+                          const Vector<DataType,Dynamic>           &x0)
 {
 	unsigned int dim = x0.rows();                                                               // Number of dimensions
 
@@ -535,11 +544,12 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 	}	
 	
 	// Run the interior point algorithm
-	for(int i = 0; i < this->steps; i++)
+	for(int i = 0; i < this->maxSteps; i++)
 	{
 		// (Re)set values for new loop
 		I = H;                                                                              // Hessian for log-barrier function
 		g.setZero();                                                                        // Gradient vector
+		this->numSteps = i+1;                                                               // Save the number of steps taken
 		
 		// Compute distance to each constraint
 		for(int j = 0; j < numConstraints; j++)
@@ -577,14 +587,14 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 				if(temp < alpha) alpha = temp;                                      // If smaller, override
 			}
 		}
+		
+		this->stepSize = alpha*dx.norm();                                                   // As it says on the label
 
-		if(alpha*dx.norm() < this->tol) break;                                              // Change in position is insignificant; must be optimal
+		if(this->stepSize < this->tol) break;                                               // Change in position is insignificant; must be optimal
 		
 		// Update values for next loop
 		u *= beta;                                                                          // Decrease barrier function
 		x += alpha*dx;                                                                      // Increment state
-		
-		this->numSteps = i+1;                                                               // Save the number of steps taken
 	}
 		
 	this->lastSolution = x;                                                                     // Save this value for future use
@@ -596,7 +606,7 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
  //            Set the step size scalar in the interior point algorith: x += alpha*dx             //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType>
-bool QPSolver<DataType>::set_step_size(const DataType &scalar)
+bool QPSolver<DataType>::set_step_scalar(const DataType &scalar)
 {
 	if(scalar <= 0)
 	{

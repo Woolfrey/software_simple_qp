@@ -20,9 +20,6 @@
 using namespace Eigen;                                                                              // Eigen::Dynamic, Eigen::Matrix
 using namespace std;                                                                                // std::invalid_argument, std::to_string
 
-
-
-
 template <class DataType = float>
 class QPSolver
 {
@@ -102,16 +99,22 @@ class QPSolver
 		
 		void clear_last_solution() { this->lastSolution.resize(0); }
 		
+		void use_dual();
+		
+		void use_primal();
+		
 	private:
 		
 		// These are variables used by the interior point method:
 		
 		DataType alpha0 = 1.0;                                                              // Scalar for Newton step
-		DataType beta   = 0.1;                                                              // Rate of decreasing barrier function
-		DataType tol    = 1e-4;                                                             // Tolerance on step size
+		DataType beta   = 0.01;                                                             // Rate of decreasing barrier function
+		DataType tol    = 1e-3;                                                             // Tolerance on step size
 		DataType u0     = 100;                                                              // Scalar on barrier function
 		
 		DataType stepSize = 0.0;
+		
+		enum Method {dual, primal} method = dual;                                                 
 		
 		unsigned int maxSteps = 20;                                                         // No. of iterations to run interior point method
 		
@@ -328,52 +331,101 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>    
 		                       "the y vector had " + to_string(y.size()) + " elements.");
 	}
 	
+
+	// Lagrangian L = 0.5*(xd - x)'*W*(xd - x) + lambda'*(y - A*xd)
+	
 	// Primal:
 	// min 0.5*(xd - x)'*W*(xd - x)
 	// subject to: A*x = y
 	//             B*x < z
 	
-	// Lagrangian L = 0.5*(xd - x)'*W*(xd - x) + lambda'*(y - A*xd)
-	
 	// Dual:
 	// min 0.5*lambda'*A*W^-1*A'*lambda - lambda'*(y - A*xd)
 	// subject to B*x < z
-
+	
 	unsigned int n = x0.size();                                                                 // Number of dimensions in the problem
-		
+
 	Matrix<DataType,Dynamic,Dynamic> invWAt = W.ldlt().solve(A.transpose());                    // Makes calcs a little easier
 	
-	Matrix<DataType,Dynamic,Dynamic> H = A*invWAt;                                              // Hessian matrix for the dual problem
-	
-	Eigen::LDLT<Matrix<DataType,Dynamic,Dynamic>> Hdecomp; Hdecomp.compute(H);                  // LDL' decomposition                                                         
-	
-	// Convert the constraints to standard form: B*x <= z
-	// B = [  I ]    z = [  xMax ]
-	//     [ -I ]        [ -xMin ]
-	Matrix<DataType, Dynamic, Dynamic> B(2*n,n);                                                // Constraint matrix
-	B.block(0,0,n,n).setIdentity();
-	B.block(n,0,n,n) = -B.block(0,0,n,n);
-	
-	Vector<DataType,Dynamic> z(2*n);                                                            // Constraint vector	
-	z.head(n) =  xMax;
-	z.tail(n) = -xMin;
-	
-	// Ensure null space projection of the desired solution xd is feasible
-	Matrix<DataType,Dynamic,1> xn = xd - invWAt*Hdecomp.solve(A*xd);                            // xd projected on to null space of A matrix
-	
-	DataType alpha = 1.0;                                                                       // Scalar
-	
-	for(int i = 0; i < n; i++)
+	switch(method)
 	{
-		     if(xn(i) >= xMax(i)) alpha = min(0.9*xMax(i)/xn(i), alpha);                    // If over the limit, reduce alpha
-		else if(xn(i) <= xMin(i)) alpha = min(0.9*xMin(i)/xn(i), alpha);
+		case dual:
+		{
+			Matrix<DataType,Dynamic,Dynamic> H = A*invWAt;                              // Hessian matrix for the dual problem
+			
+			Eigen::LDLT<Matrix<DataType,Dynamic,Dynamic>> Hdecomp; Hdecomp.compute(H);  // LDL' decomposition                                                         
+			
+			// Convert the constraints to standard form: B*x <= z
+			// B = [  I ]    z = [  xMax ]
+			//     [ -I ]        [ -xMin ]
+			Matrix<DataType, Dynamic, Dynamic> B(2*n,n);                                // Constraint matrix
+			B.block(0,0,n,n).setIdentity();
+			B.block(n,0,n,n) = -B.block(0,0,n,n);
+			
+			Vector<DataType,Dynamic> z(2*n);                                            // Constraint vector	
+			z.head(n) =  xMax;
+			z.tail(n) = -xMin;
+			
+			// Ensure null space projection of the desired solution xd is feasible
+			Matrix<DataType,Dynamic,1> xn = xd - invWAt*Hdecomp.solve(A*xd);            // xd projected on to null space of A matrix
+			
+			DataType alpha = 1.0;                                                       // Scalar
+			
+			for(int i = 0; i < n; i++)
+			{
+				     if(xn(i) >= xMax(i)) alpha = min(0.9*xMax(i)/xn(i), alpha);    // If over the limit, reduce alpha
+				else if(xn(i) <= xMin(i)) alpha = min(0.9*xMin(i)/xn(i), alpha);
+			}
+			
+			xn = alpha*xd;                                                              // New desired vector
+			
+			Vector<DataType,Dynamic> f = A*xn - y;                                      // Linear component of QP
+			
+			this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*x0));
+		
+			break;
+		}
+		case primal:
+		{
+			unsigned int m = A.rows();
+		
+			// H = [ 0  A ]
+			//     [ A' W ]
+			Matrix<DataType,Dynamic,Dynamic> H(m+n,m+n);
+			H.block(0,0,m,m).setZero();
+			H.block(0,m,m,n) = A;
+			H.block(m,0,n,m) = A.transpose();
+			H.block(m,m,n,n) = W;
+			
+			// B = [ 0  I ]
+			//     [ 0 -I ]
+			Matrix<DataType,Dynamic,Dynamic> B(2*n,m+n);
+			B.block(0,0,2*n,m).setZero();
+			B.block(0,m,  n,n).setIdentity();
+			B.block(n,m,  n,n) = -B.block(0,m,n,n);
+
+			// z = [  xMax ]
+			//     [ -xMin ]
+			Vector<DataType,Dynamic> z(2*n);
+			z.head(n) =  xMax;
+			z.tail(n) = -xMin;
+
+			// f = [   -y  ]
+			//     [ -W*xd ]
+			Vector<DataType,Dynamic> f(m+n);
+			f.head(m) = -y;
+			f.tail(n) = -W*xd;
+			
+			// Compute start point with added Lagrange multipliers
+			Vector<DataType,Dynamic> startPoint(m+n);
+			startPoint.head(m) = (A*invWAt).ldlt().solve(A*xd - y);                     // Initial guess for the Lagrange multipliers
+			startPoint.tail(n) = x0;
+			
+			this->lastSolution = solve(H,f,B,z,startPoint).tail(n);                     // Discard Lagrange multipliers
+					
+			break;
+		}
 	}
-	
-	xn = alpha*xd;                                                                              // New desired vector
-	
-	Vector<DataType,Dynamic> f = A*xn - y;                                                      // Linear component of QP
-	
-	this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*x0));
 	
 	return this->lastSolution;
 }
@@ -554,19 +606,9 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 		// Compute distance to each constraint
 		for(int j = 0; j < numConstraints; j++)
 		{
-			d[j] = z(j) - bt[j].dot(x);                                                 // Distance to the jth constraint
-			
-			/* Old code no longer necessary
-			if(d[j] <= 0)
-			{
-			//	if(i == 0) throw runtime_error("[ERROR] [QP SOLVER] solve(): Start point is outside the constraints.");
-				
-				u   *= 100;                                                         // Increase the barrier function
-				d[j] = 1e-04;                                                       // Set a small, non-zero value
-			}*/
-					
-			g += -(u/d[j])*bt[j];                                                       // Add up gradient vector
-			I +=  (u/(d[j]*d[j]))*btb[j];                                               // Add up Hessian
+			d[j] =   z(j) - bt[j].dot(x);                                               // Distance to the jth constraint	
+			g   += -(u/d[j])*bt[j];                                                     // Add up gradient vector
+			I   +=  (u/(d[j]*d[j]))*btb[j];                                             // Add up Hessian
 		}
 		
 		g += H*x + f;                                                                       // Finish summation of gradient vector
@@ -582,10 +624,15 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 			
 			if( alpha*dotProduct >= d[j] )                                              // If constraint violated on next step...
 			{
-				DataType temp = (d[j] - 1E-04)/dotProduct;                          // Compute optimal scalar to avoid constraint violation
+				DataType temp = 0.95*d[j]/dotProduct;                               // Compute optimal scalar to avoid constraint violation
 				
 				if(temp < alpha) alpha = temp;                                      // If smaller, override
 			}
+		}
+		
+		if(alpha < 0)
+		{
+			throw runtime_error("[ERROR] [QP SOLVER] solve(): Scalar for step size " + to_string(alpha) + " is negative?!");
 		}
 		
 		this->stepSize = alpha*dx.norm();                                                   // As it says on the label
@@ -705,6 +752,28 @@ bool QPSolver<DataType>::set_barrier_scalar(const DataType &scalar)
 		
 		return true;
 	}
+}
+  
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //                           Use the dual method to solve the QP problem                          //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+template<class DataType>
+void QPSolver<DataType>::use_dual()
+{
+	this->method = dual;
+	
+	std::cout << "[INFO] [QP SOLVER] Using the dual method to solve.\n";
+}
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //                         Use the primal method to solve the QP problem                          //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+template<class DataType>
+void QPSolver<DataType>::use_primal()
+{
+	this->method = primal;
+	
+	std::cout << "[INFO] [QP SOLVER] Using the primal method to solve.\n";
 }
 
 #endif

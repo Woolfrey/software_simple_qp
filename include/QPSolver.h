@@ -109,8 +109,8 @@ class QPSolver
 		
 		DataType alpha0 = 1.0;                                                              // Scalar for Newton step
 		DataType beta   = 0.01;                                                             // Rate of decreasing barrier function
-		DataType tol    = 1e-3;                                                             // Tolerance on step size
-		DataType u0     = 100;                                                              // Scalar on barrier function
+		DataType tol    = 1e-4;                                                             // Tolerance on step size
+		DataType u0     = 1000;                                                             // Scalar on barrier function
 		
 		DataType stepSize = 0.0;
 		
@@ -365,23 +365,29 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>    
 			Vector<DataType,Dynamic> z(2*n);                                            // Constraint vector	
 			z.head(n) =  xMax;
 			z.tail(n) = -xMin;
+	
+			// Ensure the desired task is feasible after null space projection
+			// or the dual method might fail
 			
-			// Ensure null space projection of the desired solution xd is feasible
-			Matrix<DataType,Dynamic,1> xn = xd - invWAt*Hdecomp.solve(A*xd);            // xd projected on to null space of A matrix
+			Vector<DataType,Dynamic> xn = xd - invWAt*Hdecomp.solve(A*xd);              // Null space projection of A matrix
 			
-			DataType alpha = 1.0;                                                       // Scalar
+			DataType scalingFactor = 1.0;                                               // As it says
 			
 			for(int i = 0; i < n; i++)
 			{
-				     if(xn(i) >= xMax(i)) alpha = min(0.9*xMax(i)/xn(i), alpha);    // If over the limit, reduce alpha
-				else if(xn(i) <= xMin(i)) alpha = min(0.9*xMin(i)/xn(i), alpha);
+				DataType ratio = 1.0;
+				
+				     if( xn(i) >= xMax(i) ) ratio = abs(xMax(i) / xn(i));
+				else if( xn(i) <= xMin(i) ) ratio = abs(xMin(i) / xn(i));
+				
+				if(ratio <= scalingFactor) scalingFactor = 0.95*ratio;              // Override if smaller
 			}
 			
-			xn = alpha*xd;                                                              // New desired vector
+			xn = scalingFactor*xd;                                                      // New desired value for solution
 			
 			Vector<DataType,Dynamic> f = A*xn - y;                                      // Linear component of QP
 			
-			this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*x0));
+			this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*(x0 - xn)));
 		
 			break;
 		}
@@ -506,7 +512,7 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 		}
 	}
 	
-	this->lastSolution = xn + invWAt*solve(H, A*xd - y, B*invWAt, z - B*xd, Hdecomp.solve(A*(x0 - xd)));
+	this->lastSolution = xn + invWAt*solve(H, A*xd - y, B*invWAt, z - B*xd, Hdecomp.solve(y - A*xn));
 	
 	return this->lastSolution;
 }
@@ -516,11 +522,11 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
 Vector<DataType,Dynamic>
-QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
-                          const Vector<DataType,Dynamic>           &f,
-                          const Matrix<DataType, Dynamic, Dynamic> &B,
-                          const Vector<DataType,Dynamic>           &z,
-                          const Vector<DataType,Dynamic>           &x0)
+QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic>  &H,
+                          const Vector<DataType, Dynamic>           &f,
+                          const Matrix<DataType, Dynamic, Dynamic>  &B,
+                          const Vector<DataType, Dynamic>           &z,
+                          const Vector<DataType, Dynamic>           &x0)
 {
 	unsigned int dim = x0.rows();                                                               // Number of dimensions
 
@@ -570,30 +576,23 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 
 	vector<DataType> d; d.resize(numConstraints);                                               // Distance to every constraint
 	
-	// Make sure the start point is inside the constraints	
-	Matrix<DataType,Dynamic,1> blah(dim);
-	
-	if(numConstraints < dim) blah = B.transpose()*(B*B.transpose()).ldlt().solve(z);            // Project constraint back to state space
-	else                     blah = (B.transpose()*B).ldlt().solve(B.transpose()*z);
-	
-	for(int i = 0; i < dim; i++)
-	{
-		if(x(i) >= blah(i))                                                                 // If a single element violates constraints...
-		{
-			x = blah;                                                                   // ... override the start point
-			break;                                                                      // Break the loop
-		}
-	}
-	
 	// Do some pre-processing
-	vector<Matrix<DataType,Dynamic,1>> bt(numConstraints);                                      // Row vectors of B matrix transposed
-	vector<Matrix<DataType,Dynamic,Dynamic>> btb(numConstraints);                               // Outer product of row vectors
-	
+	vector<Vector<DataType, Dynamic>>          bt(numConstraints);                              // Row vectors of B matrix transposed
+	vector<Matrix<DataType, Dynamic, Dynamic>> btb(numConstraints);                             // Outer product of row vectors
 	for(int j = 0; j < numConstraints; j++)
 	{
 		bt[j]  = B.row(j).transpose();                                                      // Row vector converted to column vector
 		btb[j] = B.row(j).transpose()*B.row(j);                                             // Outer product of row vectors
-	}	
+		
+		/*
+		if(z(j) - bt[j].dot(x0) < 0)
+		{
+			throw invalid_argument("[ERROR] [QP SOLVER] solve(): "
+			                       "Start point for solver lies outside the constraints. "
+			                       "Cannot guarantee a feasible solution.");
+		}
+		*/		
+	}
 	
 	// Run the interior point algorithm
 	for(int i = 0; i < this->maxSteps; i++)
@@ -606,13 +605,20 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 		// Compute distance to each constraint
 		for(int j = 0; j < numConstraints; j++)
 		{
-			d[j] =   z(j) - bt[j].dot(x);                                               // Distance to the jth constraint	
+			d[j] = z(j) - bt[j].dot(x);                                                 // Distance to the jth constraint
+			
+			if(d[j] <= 0)                                                               // Constraint violated?!
+			{
+				d[j] = this->tol;                                                   // Set a small, but non-zero value
+				  u /= this->beta;                                                  // Increase the barrier to push the solution away
+			}
+				  	
 			g   += -(u/d[j])*bt[j];                                                     // Add up gradient vector
 			I   +=  (u/(d[j]*d[j]))*btb[j];                                             // Add up Hessian
 		}
 		
 		g += H*x + f;                                                                       // Finish summation of gradient vector
-
+		
 		dx = I.ldlt().solve(-g);                                                            // Robust Cholesky decomp
 		
 		// Ensure the next position is within the constraint
@@ -630,14 +636,9 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 			}
 		}
 		
-		if(alpha < 0)
-		{
-			throw runtime_error("[ERROR] [QP SOLVER] solve(): Scalar for step size " + to_string(alpha) + " is negative?!");
-		}
-		
 		this->stepSize = alpha*dx.norm();                                                   // As it says on the label
-
-		if(this->stepSize < this->tol) break;                                               // Change in position is insignificant; must be optimal
+		
+		if( this->stepSize <= this->tol and (z - B*x).dot(z - B*dx) >= 0 ) break;           // If below tolerance AND moving toward constraint, then terminate
 		
 		// Update values for next loop
 		u *= beta;                                                                          // Decrease barrier function

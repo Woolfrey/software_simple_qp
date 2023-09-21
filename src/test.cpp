@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
 		
 		float error1 = (y - A*x).norm();
 		
-		std::cout << "\nThe error ||y - A*x|| is: " << error1 << ", "
+		std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
 			  <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
 			  
 		std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n\n";
@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
 		comparison.col(1) = x;
 		std::cout << "\n" << comparison << std::endl;
 		
-		std::cout << "\nThe error ||y - A*x|| is: " << error2 << ", "
+		std::cout << "\nThe error ||y - A*x|| is: " << error2/y.norm() << ", "
 			  <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
 			  
 		std::cout << "\nThe dual method was " << t2/t1 << " times faster. ";

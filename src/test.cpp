@@ -224,16 +224,16 @@ int main(int argc, char *argv[])
 	m = 12;
 	n = 17;
 	
+	xMin = -5*Eigen::VectorXf::Ones(n);
+	xMax =  5*Eigen::VectorXf::Ones(n);
+	
 	A = Eigen::MatrixXf::Random(m,n);
 	Eigen::VectorXf xTrue = Eigen::VectorXf::Random(n);
 	y = A*xTrue;
 	
-	xMin = -5*Eigen::VectorXf::Ones(n);
-	xMax =  5*Eigen::VectorXf::Ones(n);
-	
 	Eigen::VectorXf xd = 10*Eigen::VectorXf::Random(n);
 	
-	Eigen::VectorXf x0 = 10*Eigen::VectorXf::Random(n);
+	Eigen::VectorXf x0 = 0.5*(xMin + xMax);
 	
 	std::cout << "\nWe can even solve redundant systems subject to constraint:\n"
 	          << "\n      min 0.5*(xd - x)'*W*(xd - x)\n"
@@ -249,53 +249,64 @@ int main(int argc, char *argv[])
 	std::cout << "\nHere is the solution for a " << m << "x" << n << " system using the dual method:\n";
 	
 	timer = clock();
-	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
-	timer = clock() - timer;
-	float t1  = (float)timer/CLOCKS_PER_SEC;
-	
-	comparison.resize(n,3); 
-	comparison.col(0) = xMin;
-	comparison.col(1) = x;
-	comparison.col(2) = xMax;
-	std::cout << "\n" << comparison << std::endl;
-	
-	for(int i = 0; i < x.size(); i++)
+	try
 	{
-		if(x(i) <= xMin(i) or x(i) >= xMax(i))
+		solver.set_tolerance(1e-04);
+		
+		x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
+
+		timer = clock() - timer;
+		float t1  = (float)timer/CLOCKS_PER_SEC;
+		
+		comparison.resize(n,3); 
+		comparison.col(0) = xMin;
+		comparison.col(1) = x;
+		comparison.col(2) = xMax;
+		std::cout << "\n" << comparison << std::endl;
+		
+		for(int i = 0; i < x.size(); i++)
 		{
-			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
-			break;
+			if(x(i) <= xMin(i) or x(i) >= xMax(i))
+			{
+				std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
+				break;
+			}
 		}
+		
+		float error1 = (y - A*x).norm();
+		
+		std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
+			  <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
+			  
+		std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n\n";
+
+		solver.use_primal();
+		
+		solver.set_tolerance(1e-03);
+		
+		std::cout << "\nUsing the primal method we get:\n";
+
+		timer = clock();
+		x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
+		timer = clock() - timer;
+		float t2  = (float)timer/CLOCKS_PER_SEC;
+		
+		float error2 = (y - A*x).norm();
+		
+		comparison.col(1) = x;
+		std::cout << "\n" << comparison << std::endl;
+		
+		std::cout << "\nThe error ||y - A*x|| is: " << error2/y.norm() << ", "
+			  <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
+			  
+		std::cout << "\nThe dual method was " << t2/t1 << " times faster. ";
+		
+		if(error1 > error2) std::cout << "The primal method was " << error1/error2 << " times more accurate.\n";
+		else                std::cout << "The dual method was " << error2/error1 << " times more accurate.\n";
 	}
-	
-	float error1 = (y - A*x).norm();
-	
-	std::cout << "\nThe error ||y - A*x|| is: " << error1 << ", "
-	          <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
-	          
-	std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n";
-
-/*	I've deactivated the primal method because the dual is better
-
-	solver.use_primal();
-	
-	std::cout << "\nUsing the primal method we get:\n";
-
-	timer = clock();
-	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
-	timer = clock() - timer;
-	float t2  = (float)timer/CLOCKS_PER_SEC;
-	
-	float error2 = (y - A*x).norm();
-	
-	comparison.col(1) = x;
-	std::cout << "\n" << comparison << std::endl;
-	
-	std::cout << "\nThe error ||y - A*x|| is: " << error2 << ", "
-	          <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
-	          
-	std::cout << "\nThe dual method was " << t2/t1 << " times faster. "
-	          << "The primal method was " << error1/error2 << " times more accurate.\n";
-*/         
+	catch(const std::exception &exception)
+	{
+		std::cout << exception.what() << std::endl;
+	}     
 	return 0; 
 }

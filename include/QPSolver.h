@@ -238,12 +238,12 @@ QPSolver<DataType>::redundant_least_squares(const Vector<DataType, Dynamic>     
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
 Vector<DataType,Dynamic>
-QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>           &y,
-                                              const Matrix<DataType, Dynamic, Dynamic> &A,
-                                              const Matrix<DataType, Dynamic, Dynamic> &W,
-                                              const Vector<DataType,Dynamic>           &xMin,
-                                              const Vector<DataType,Dynamic>           &xMax,
-                                              const Vector<DataType,Dynamic>           &x0)
+QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>           &y,
+                                              const Matrix<DataType, Dynamic, Dynamic>  &A,
+                                              const Matrix<DataType, Dynamic, Dynamic>  &W,
+                                              const Vector<DataType, Dynamic>           &xMin,
+                                              const Vector<DataType, Dynamic>           &xMax,
+                                              const Vector<DataType, Dynamic>           &x0)
 {
 	// Check that the inputs are sound
 	if(y.rows() != A.rows() or A.rows() != W.rows())
@@ -296,13 +296,13 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>    
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
 Vector<DataType,Dynamic>
-QPSolver<DataType>::constrained_least_squares(const Vector<DataType,Dynamic>           &xd,
-                                              const Matrix<DataType, Dynamic, Dynamic> &W,
-                                              const Matrix<DataType, Dynamic, Dynamic> &A,
-                                              const Vector<DataType,Dynamic>           &y,
-                                              const Vector<DataType,Dynamic>           &xMin,
-                                              const Vector<DataType,Dynamic>           &xMax,
-                                              const Vector<DataType,Dynamic>           &x0)
+QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>           &xd,
+                                              const Matrix<DataType, Dynamic, Dynamic>  &W,
+                                              const Matrix<DataType, Dynamic, Dynamic>  &A,
+                                              const Vector<DataType, Dynamic>           &y,
+                                              const Vector<DataType, Dynamic>           &xMin,
+                                              const Vector<DataType, Dynamic>           &xMax,
+                                              const Vector<DataType, Dynamic>           &x0)
 {
 	// Check that the dimensions of the inputs are sound
 	if(xd.size() != W.rows()    or W.rows()    != A.cols()
@@ -445,6 +445,8 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 		{
 			unsigned int m = A.rows();
 		
+			unsigned int c = B.rows();
+		
 			// H = [ 0  A ]
 			//     [ A' W ]
 			Matrix<DataType,Dynamic,Dynamic> H(m+n,m+n);
@@ -457,9 +459,9 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 			
 			// B = [ 0  I ]
 			//     [ 0 -I ]
-			Matrix<DataType,Dynamic,Dynamic> newB(2*n,m+n);
-			newB.block(0,0,2*n,m).setZero();
-			newB.block(0,m,2*n,n) = B;
+			Matrix<DataType,Dynamic,Dynamic> newB(c,m+n);
+			newB.block(0,0,c,m).setZero();
+			newB.block(0,m,c,n) = B;
 
 			// f = [   -y  ]
 			//     [ -W*xd ]

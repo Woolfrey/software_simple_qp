@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 	
 	Eigen::VectorXf xd = 10*Eigen::VectorXf::Random(n);
 	
-	Eigen::VectorXf x0 = 0.5*(xMin + xMax);
+	Eigen::VectorXf x0 = 10*Eigen::VectorXf::Random(n);
 	
 	std::cout << "\nWe can even solve redundant systems subject to constraint:\n"
 	          << "\n      min 0.5*(xd - x)'*W*(xd - x)\n"
@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
 
 		solver.use_primal();
 		
-		solver.set_tolerance(1e-03);
+		solver.set_tolerance(1e-04);
 		
 		std::cout << "\nUsing the primal method we get:\n";
 

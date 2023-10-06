@@ -24,28 +24,64 @@ template <class DataType = float>
 class QPSolver
 {
 	public:
+		/**
+		 * Constructor.
+		 */
 		QPSolver() {}
 			
-		// These methods can be called without creating an object of this class
-		
+		/**
+		 * Minimize 0.5*x'*H*x + x'*f, where x is the decision variable.
+		 * @param H The Hessian matrix. It is assumed to be positive semi-definite.
+		 * @param f A vector.
+		 * @return The optimal solution for x.
+		 */
 		static Vector<DataType,Dynamic>
 		solve(const Matrix<DataType, Dynamic, Dynamic>  &H,
                       const Vector<DataType, Dynamic>           &f);
 	
-		                                      
+		             
+		/**
+		 * Linear least squares of a problem y - A*x.
+		 * @param y The vector of outputs or observations
+		 * @param A The matrix defining the linear relationship between y and x
+		 * @param W A positive-definite weighting on the y values.
+		 * @return The vector x which returns the minimum norm || y - A*x ||
+		 */             
 		static Vector<DataType,Dynamic>
 		least_squares(const Vector<DataType,Dynamic>           &y,
 			      const Matrix<DataType, Dynamic, Dynamic> &A,
 			      const Matrix<DataType, Dynamic, Dynamic> &W);
 
+		/**
+		 * Solve a least squares problem where the decision variable has more elements than the output.
+		 * The problem is of the form:
+		 * min 0.5*(xd - x)'*W*(xd - x)
+		 * subject to: A*x = y
+		 * @param xd A desired value for the solution.
+		 * @param W A weighting on the desired values / solution
+		 * @param A The matrix for the linear equality constraint
+		 * @param y Equality constraint vector
+		 * @return The optimal solution for x.
+		 */
 		static Vector<DataType,Dynamic>
 		redundant_least_squares(const Vector<DataType, Dynamic>          &xd,
 		                        const Matrix<DataType, Dynamic, Dynamic> &W,
 		                        const Matrix<DataType, Dynamic, Dynamic> &A,
 		                        const Vector<DataType, Dynamic>          &y);
 		                                                         
-		// These methods require an object since they rely on the interior point solver
-		
+		/**
+		 * Solve linear least squares with upper and lower bounds on the solution.
+		 * The problem is of the form:
+		 * min 0.5*(y - A*x)'*W*(y - A*x)
+		 * subject to: xMin <= x <= x
+		 * This method uses an interior point algorithm to satisfy inequality constraints and thus requires a start point as an argument.
+		 * @param y The vector component of the linear equation.
+		 * @param A The matrix that maps x to y.
+		 * @param xMin The lower bound on the decision variable
+		 * @param xMax The upper bound on the decision variable.
+		 * @param x0 A start point for the algorithm.
+		 * @return The optimal solution within the constraints.
+		 */
 		Vector<DataType,Dynamic>
 		constrained_least_squares(const Vector<DataType, Dynamic>          &y,
 		                          const Matrix<DataType, Dynamic, Dynamic> &A,
@@ -53,7 +89,22 @@ class QPSolver
 		                          const Vector<DataType, Dynamic>          &xMin,
 		                          const Vector<DataType, Dynamic>          &xMax,
 		                          const Vector<DataType, Dynamic>          &x0);
-		                                        
+		             
+		/**
+		 * Solve a redundant least squares problem with upper and lower bounds on the solution.
+		 * The problem is of the form:
+		 * min 0.5*(xd - x)'*W*(xd - x)
+		 * subject to: A*x = y
+		 *           xMin <= x <= xMax
+		 * It uses an interior point algorithm and thus requires a start point as an argument.
+		 * @param xd Desired value for the solution.
+		 * @param W Weighting on the desired value / solution.
+		 * @param A Linear equality constraint matrix.
+		 * @param y Linear equality constraint vector.
+		 * @param xMin Lower bound on the solution.
+		 * @param xMax upper bound on the solution.
+		 * @param x0 Starting point for the algorithm.
+		 */                  
 		Vector<DataType,Dynamic>
 		constrained_least_squares(const Vector<DataType, Dynamic>          &xd,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
@@ -63,6 +114,21 @@ class QPSolver
 		                          const Vector<DataType, Dynamic>          &xMax,
 		                          const Vector<DataType, Dynamic>          &x0);
 		
+		/**
+		 * Solve a redundant least squares problem with inequality constraints on the solution.
+		 * The problem is of the form:
+		 * min 0.5*(xd - x)'*W*(xd - x)
+		 * subject to: A*x = y
+		 *             B*x < z
+		 * It uses an interior point algorithm and thus requires a start point as an argument.
+		 * @param xd Desired value for the solution.
+		 * @param W Weighting on the desired value / solution.
+		 * @param A Equality constraint matrix.
+		 * @param y Equality constraint vector.
+		 * @param B Inequality constraint matrix.
+		 * @param z Inequality constraint vector.
+		 * @param x0 Starting point for the algorithm.
+		 */  
 		Vector<DataType,Dynamic>
 		constrained_least_squares(const Vector<DataType, Dynamic>          &xd,
 		                          const Matrix<DataType, Dynamic, Dynamic> &W,
@@ -72,59 +138,109 @@ class QPSolver
 		                          const Vector<DataType, Dynamic>          &z,
 		                          const Vector<DataType, Dynamic>          &x0);
 		
+		/**
+		 * Solve a generic quadratic programming problem with inequality constraints.
+		 * The problem is of the form:
+		 * min 0.5*x'*H*x + x'*f
+		 * subject to: B*x < z
+		 * This method uses an interior point algorithm and thus requires a start point as an argument.
+		 * @param H A positive semi-definite matrix such that H = H'.
+		 * @param f A vector for the linear component of the problem.
+		 * @param B Inequality constraint matrix.
+		 * @param z Inequality constraint vector.
+		 * @param x0 Start point for the algorithm.
+		 * @return x: A solution that minimizes the problem whilst obeying inequality constraints.
+		 */
 		Vector<DataType,Dynamic>  
 		solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 		      const Vector<DataType, Dynamic>          &f,
 		      const Matrix<DataType, Dynamic, Dynamic> &B,
 		      const Vector<DataType, Dynamic>          &z,
 		      const Vector<DataType, Dynamic>          &x0);
-		      
-		// Methods for setting properties in the interior point solver
 		
-		bool set_step_scalar(const DataType &scalar);
-
+		/**
+		 * Set the tolerance for the step size in the interior point aglorithm.
+		 * The algorithm terminates if alpha*dx < tolerance, where dx is the step and alpha is a scalar.
+		 * @param tolerance As it says.
+		 * @return Returns false if the input argument is invalid.
+		 */
 		bool set_tolerance(const DataType &tolerance);
 		
+		/**
+		 * Set the maximum number of steps in the interior point algorithm before terminating.
+		 * @param number As it says.
+		 * @return Returns false if the input argument is invalid.
+		 */
 		bool set_num_steps(const unsigned int &number);
 		
+		/**
+		 * Set the scalar for the constraint barriers in the interior point aglorithm.
+		 * Inequality constraints are converted to a log barrier function. The scalar determines how steep the initial barriers are.
+		 * @param scalar The initial scalar value when starting the interior point algorithm.
+		 * @return Returns false if the argument was invalid.
+		 */
 		bool set_barrier_scalar(const DataType &scalar);
 		
+		/**
+		 * Set the rate at which the constraint barriers are reduced in the interior point aglorithm.
+		 * The barrier is reduced at a given rate / scale every step in the algorithm to safely approach constraints.
+		 * @param rate A scalar < 1 which the barrier scalar is reduced by every step.
+		 * @return Returns false if the argument is invalid.
+		 */
 		bool set_barrier_reduction_rate(const DataType &rate);
 		
+		/**
+		 * @return Returns the step size alpha*||dx|| for the final iteration in the interior point algorithm.
+		 */
 		DataType step_size() const { return this->stepSize; }
 		
+		/**
+		 * @return Returns the number of iterations it took to solve the interior point algorithm.
+		 */
 		unsigned int num_steps() const { return this->numSteps; }
 		
+		/**
+		 * @return Returns the last solution from when the interior point algorithm was previously called.
+		 */
 		Vector<DataType, Dynamic> last_solution() const { return this->lastSolution; }
 		
+		/**
+		 * Clears the last solution such that last_solution().size() == 0.
+		 */
 		void clear_last_solution() { this->lastSolution.resize(0); }
 		
+		/**
+		 * The interior point algorithm will use the dual method to solve a redundant QP problem.
+		 */
 		void use_dual();
 		
+		/**
+		 * The interior point algorithm will use the primal method to solve a redundant QP problem.
+		 */
 		void use_primal();
 		
 	private:
 		
-		// These are variables used by the interior point method:
+		DataType tol = 1e-04;                                                               ///< Minimum value for the step size before terminating the interior point algorithm.
+		DataType stepSize;                                                                  ///< Step size on the final iteration of the interior point algorithm.
+		DataType barrierReductionRate = 1e-03;                                               ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
+		DataType initialBarrierScalar = 1000;                                               ///< Starting value for the constraint barrier scalar in the interior point algorithm.
 		
-		DataType alpha0 = 1.0;                                                              // Scalar for Newton step
-		DataType beta   = 0.01;                                                             // Rate of decreasing barrier function
-		DataType tol    = 1e-3;                                                             // Tolerance on step size
-		DataType u0     = 100;                                                              // Scalar on barrier function
+		enum Method {dual, primal} method = primal;                                         ///< Used to select which method to solve for with redundant least squares problems.                                               
 		
-		DataType stepSize = 0.0;
+		unsigned int maxSteps = 20;                                                         ///< Maximum number of iterations to run interior point method before terminating.
 		
-		enum Method {dual, primal} method = dual;                                                 
+		unsigned int numSteps = 0;                                                          ///< Records the number of steps it took to solve a problem with the interior point algorithm.
 		
-		unsigned int maxSteps = 20;                                                         // No. of iterations to run interior point method
+		Vector<DataType,Dynamic> lastSolution;                                              ///< Final solution returned by interior point algorithm. Can be used as a starting point for future calls to the method.
 		
-		unsigned int numSteps = 0;                                                          // Number of steps taken to compute a solution
-		
-		Vector<DataType,Dynamic> lastSolution;                                              // Can be used for future use
-		
+		/**
+		 * The std::min function doesn't like floats, so I had to write my own ಠ_ಠ
+		 * @return Returns the minimum between to values 'a' and 'b'.
+		 */
 		DataType min(const DataType &a, const DataType &b)
 		{
-			DataType minimum = (a < b) ? a : b;                                         // std::min doesn't like floats ಠ_ಠ
+			DataType minimum = (a < b) ? a : b;
 			return minimum;
 		}
 		
@@ -227,9 +343,9 @@ QPSolver<DataType>::redundant_least_squares(const Vector<DataType, Dynamic>     
         }
         else
         {   		
-		MatrixXf B = W.ldlt().solve(A.transpose());                                         // Makes calcs a little easier
+		MatrixXf invWA = W.ldlt().solve(A.transpose());                                     // Makes calcs a little easier
 		
-		return xd + B*(A*B).ldlt().solve(y - A*xd);                                         // xd - W^-1*A'*(A*W^-1*A')^-1*(y-A*xd)
+		return xd + invWA*(A*invWA).ldlt().solve(y - A*xd);                                 // xd + W^-1*A'*(A*W^-1*A')^-1*(y-A*xd)
 	}
 }
 
@@ -245,50 +361,49 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
                                               const Vector<DataType, Dynamic>           &xMax,
                                               const Vector<DataType, Dynamic>           &x0)
 {
-	// Check that the inputs are sound
-	if(y.rows() != A.rows() or A.rows() != W.rows())
+	// Ensure that the input arguments are sound.
+	if(y.size() != A.rows() or A.rows() != W.rows())
 	{
 		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Dimensions of arguments do not match. "
-		                       "The y vector argument had " + to_string(y.rows()) + " rows, "
-		                       "the A matrix argument had " + to_string(A.rows()) + " rows, and "
-		                       "the weighting matrix argument W was " + to_string(W.rows()) + "x" + to_string(W.cols()) + ".");
+		                       "Dimensions of the linear equation do not match. "
+		                       "The y vector had " + to_string(y.size()) + " elements, "
+		                       "the A matrix had " + to_string(A.rows()) + " rows, and "
+		                       "the weighting matrix W had " + to_string(W.rows()) + " rows.");
 	}
 	else if(W.rows() != W.cols())
 	{
 		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Expected the weighting matrix W to be square but "
-		                       "it was " + to_string(W.rows()) + "x" + to_string(W.cols()) + ".");
+		                       "Expected the weighting matrix W to be square, but it was "
+		                       + to_string(W.rows()) + "x" + to_string(W.cols()) + ".");
 	}
-	else if(A.cols() != xMin.rows() or xMin.rows() != xMax.rows() or xMax.rows() != x0.rows())
+	else if(A.cols() != xMin.size() or xMin.size() != xMax.size() or xMax.size() != x0.size())
 	{
 		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Dimensions of arguments do not match. "
+		                       "Dimensions for decision variable do not match. "
 		                       "The A matrix had " + to_string(A.cols()) + " columns, "
-		                       "the xMin vector had " + to_string(xMin.rows()) + " rows, "
-		                       "the xMax vector had " + to_string(xMax.rows()) + " rows, "
-		                       "and the start point vector x0 had " + to_string(x0.rows()) + " rows.");
+		                       "the xMin argument had " + to_string(xMin.size()) + " elements, "
+		                       "the xMax argument had " + to_string(xMax.size()) + " elements, and "
+		                       "the start point x0 had " + to_string(x0.size()) + " elements.");
 	}
+	
+	// Convert to standard form and solve with the interior point algorithm
 	
 	unsigned int n = x0.size();
 	
-	// Put the constraints in to standard form Bx <= z where:
-	// B = [  I ]   z = [  xMax ]
+	// B = [  I ] < z = [  xMax ]
 	//     [ -I ]       [ -xMin ]
 	
 	Matrix<DataType,Dynamic,Dynamic> B(2*n,n);
 	B.block(0,0,n,n).setIdentity();
-	B.block(n,0,n,n) = -B.block(0,0,n,n);
+	B.block(n,0,n,n) = -Matrix<DataType,Dynamic,Dynamic>::Identity(n,n);
 	
-	Matrix<DataType,Dynamic,1> z(2*n);
+	Vector<DataType,Dynamic> z(2*n);
 	z.head(n) =  xMax;
 	z.tail(n) = -xMin;
 	
-	Matrix<DataType, Dynamic, Dynamic> AtW = A.transpose()*W;                                   // Makes calcs a little easier
-	
-	this->lastSolution = solve(AtW*A, -AtW*y, B, z, x0);                                        // Convert to standard QP problem and solve
-	
-	return this->lastSolution;
+	Matrix<DataType,Dynamic,Dynamic> AtW = A.transpose()*W;                                     // Makes calcs a tiny bit faster
+
+	return solve(AtW*A, -AtW*y, B, z, x0);                                                      // Send to interior point algorithm and solve
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -304,38 +419,30 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
                                               const Vector<DataType, Dynamic>           &xMax,
                                               const Vector<DataType, Dynamic>           &x0)
 {
-	// Check that the dimensions of the inputs are sound
-	if(xd.size() != W.rows()    or W.rows()    != A.cols()
-	or A.cols()  != xMin.size() or xMin.size() != xMax.size() or xMax.size() != x0.size())
+	if(xMin.size() != xMax.size())
 	{
 		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Dimensions of input arguments do not match. "
-		                       "The desired vector xd had " + to_string(xd.size()) + " elements, "
-		                       "the weighting matrix W was " + to_string(W.rows()) + "x" + to_string(W.cols()) + ", "
-		                       "the A matrix had " + to_string(A.cols()) + " columns, "
-		                       "the xMin vector had " + to_string(xMin.size()) + " elements, "
-		                       "the xMax vector had " + to_string(xMax.size()) + " elements, and "
-		                       "the start point x0 had " + to_string(x0.size()) + " elements.");
+		                       "Dimensions of inequality constraints do not match. "
+		                       "The xMin argument had " + to_string(xMin.size()) + " elements, and "
+		                       "the xMax argument had " + to_string(xMax.size()) + " elements.");
 	}
+		                       
+	// Convert constraints to standard form and pass on to generic function
 	
+	unsigned int n = xMin.size();
 	
-	// Convert the constraints to standard form: B*x <= z
-	// B = [  I ]    z = [  xMax ]
-	//     [ -I ]        [ -xMin ]
+	// B = [  I ] < z = [  xMax ]
+	//     [ -I ]     = [ -xMin ]
 	
-	unsigned int n = x0.size();
-	
-	Matrix<DataType, Dynamic, Dynamic> B(2*n,n);
+	Matrix<DataType,Dynamic,Dynamic> B(2*n,n);
 	B.block(0,0,n,n).setIdentity();
-	B.block(n,0,n,n) = -B.block(0,0,n,n);
+	B.block(n,0,n,n) = -Matrix<DataType,Dynamic,Dynamic>::Identity(n,n);
 	
-	Vector<DataType,Dynamic> z(2*n);	
+	Vector<DataType,Dynamic> z(2*n);
 	z.head(n) =  xMax;
 	z.tail(n) = -xMin;
 	
-	this->lastSolution = constrained_least_squares(xd,W,A,y,B,z,x0);
-	
-	return this->lastSolution;
+	return constrained_least_squares(xd, W, A, y, B, z, x0);
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -351,129 +458,86 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
                                               const Vector<DataType, Dynamic>          &z,
                                               const Vector<DataType, Dynamic>          &x0)
 {
+	// Ensure input arguments are sound
 	if(xd.size() != W.rows() or W.rows() != A.cols() or A.cols() != B.cols() or B.cols() != x0.size())
 	{
 		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Dimensions of input arguments do not match. "
-		                       "The desired vector xd had " + to_string(xd.size()) + " elements, "
-		                       "the weighting matrix was " + to_string(W.rows()) + " x " + to_string(W.cols()) + ", "
+		                       "Dimensions for decision variable do not match. "
+		                       "The desired value xd had " + to_string(xd.size()) + " elements, "
+		                       "the weighting matrix W had " + to_string(W.rows()) + " rows, "
 		                       "the equality constraint matrix A had " + to_string(A.cols()) + " columns, "
-		                       "the inequality constraint matrix B had " + to_string(B.cols()) + " columns,  and "
+		                       "the inequality constraint matrix B had " + to_string(B.cols()) + " columns, and "
 		                       "the start point x0 had " + to_string(x0.size()) + " elements.");
 	}
 	else if(W.rows() != W.cols())
 	{
 		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Expected the weighting matrix W to be squares, "
-		                       "but it was " + to_string(W.rows()) + "x" + to_string(W.cols()) + ".");
+		                       "Expected the weighting matrix W to be square, but it was "
+		                       + to_string(W.rows()) + "x" + to_string(W.cols()) + ".");
 	}
 	else if(A.rows() != y.size())
 	{
 		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Dimensions for the equality constraint do not match. "
-		                       "The A matrix had " + to_string(A.rows()) + " rows, and "
-		                       "the y vector had " + to_string(y.size()) + " elements.");
+		                       "Dimensions for equality constraint do not match. "
+		                       "The equality constraint matrix A had " + to_string(A.rows()) + " rows, and "
+		                       "the equality constraint vector y had " + to_string(y.size()) + " elements.");
 	}
-	else if(B.rows() != z.size())
+	else if(B.rows() != z.rows())
 	{
-		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Dimensions for inequality constraint do not match. "
-		                       "The B matrix had " + to_string(B.rows()) + " rows, and "
-		                       "the z vector had " + to_string(z.size()) + " elements.");
+		throw invalid_argument("[ERROR] [QP SOLVER] constrained_least_squared(): "
+		                       "Dimensions for inequality constraint do no match. "
+		                       "The inequality constraint matrix B had " + to_string(B.rows()) + " rows, and "
+		                       "the inequality constraint vector z had " + to_string(z.size()) + " elements.");
 	}
-
-	// Primal:
-	// min 0.5*(xd - x)'*W*(xd - x)
-	// subject to: A*x = y
-	//             B*x < z
 	
-	// Lagrangian L = 0.5*(xd - x)'*W*(xd - x) + lambda'*(y - A*xd)
-	
-	// Dual:
-	// min 0.5*lambda'*A*W^-1*A'*lambda - lambda'*(y - A*xd)
-	// subject to B*x < z
-
-	unsigned int n = x0.size();                                                                 // Number of dimensions in the problem
-	
-	Matrix<DataType,Dynamic,Dynamic> invWAt = W.ldlt().solve(A.transpose());                    // Makes calcs a little easier
+	if(this->method == primal)
+	{	
+		unsigned int c = B.rows();
+		unsigned int m = A.rows();
+		unsigned int n = A.cols();
 		
-	switch(method)
+		// H = [  0  -A ]
+		//     [ -A'  W ]
+		Matrix<DataType,Dynamic,Dynamic> H(m+n,m+n);
+		H.block(0,0,m,m).setZero();
+		H.block(0,m,m,n) = -A;
+		H.block(m,0,n,m) = -A.transpose();
+		H.block(m,m,n,n) = W;
+		
+		// f = [    y  ]
+		//     [ -W*xd ]
+		Vector<DataType,Dynamic> f(m+n);
+		f.head(m) = y;
+		f.tail(n) = -W*xd;
+		
+		// new_x0 = [ lambda ]
+		//          [   x0   ]
+		Vector<DataType,Dynamic> new_x0(m+n);
+		new_x0.head(m) = (A*W.ldlt().solve(A.transpose())).ldlt().solve(y - A*xd);          // Initial guess for Lagrange multipliers
+		new_x0.tail(n) = x0;
+		
+		// newB = [ 0 B ]
+		Matrix<DataType,Dynamic,Dynamic> newB(c,m+n);
+		newB.block(0,0,c,m).setZero();
+		newB.block(0,m,c,n) = B;
+		
+		this->lastSolution = solve(H,f,newB,z,new_x0).tail(n);                              // We don't need the Lagrange multipliers
+		
+		return this->lastSolution;                                                          // Return decision variable x
+	}
+	else if(this->method == dual)
 	{
-		case dual:
-		{
-			Matrix<DataType,Dynamic,Dynamic> H = A*invWAt;                              // Hessian matrix for the dual problem
-			
-			Eigen::LDLT<Matrix<DataType,Dynamic,Dynamic>> Hdecomp; Hdecomp.compute(H);  // LDL' decomposition                                                         
-	
-			// Ensure the desired task is feasible after null space projection
-			// or the dual method might fail
-			
-			Vector<DataType,Dynamic> xn = xd - invWAt*Hdecomp.solve(A*xd);              // Null space projection of A matrix
-			
-			DataType scalingFactor = 1.0;                                               // As it says
-			
-			for(int i = 0; i < z.size(); i++)
-			{
-				DataType dotProd = B.row(i).dot(xn);
-				
-				DataType dist = z(i) - dotProd;
-				
-				if(dist <= 0) scalingFactor = min( 0.95*abs(z(i)/dotProd), scalingFactor );
-			}
-			
-			xn = scalingFactor*xd;                                                      // New desired value for solution
-			
-			Vector<DataType,Dynamic> f = A*xn - y;                                      // Linear component of QP
-			
-			this->lastSolution = xn + invWAt*solve(H, f, B*invWAt, z - B*xn, Hdecomp.solve(A*(x0 - xn)));
+		std::cerr << "[ERROR] [QP SOLVER] constrained_least_squares(): "
+		          << "Dual method has not been programmed in.\n";
 		
-			break;
-		}
-		case primal:
-		{
-			unsigned int m = A.rows();
-			unsigned int c = B.rows();
-		
-			// H = [ 0  A ]
-			//     [ A' W ]
-			Matrix<DataType,Dynamic,Dynamic> H(m+n,m+n);
-			H.block(0,0,m,m).setZero();
-			H.block(0,m,m,n) = A;
-			H.block(m,0,n,m) = A.transpose();
-			H.block(m,m,n,n) = W;
-
-			// Note: Need to augment constraints to account for Lagrange multipliers
-			
-			// B = [ 0  I ]
-			//     [ 0 -I ]
-			Matrix<DataType,Dynamic,Dynamic> newB(c,m+n);
-			newB.block(0,0,c,m).setZero();
-			newB.block(0,m,c,n) = B;
-
-			// f = [   -y  ]
-			//     [ -W*xd ]
-			Vector<DataType,Dynamic> f(m+n);
-			f.head(m) = -y;
-			f.tail(n) = -W*xd;
-			
-			// Compute start point with added Lagrange multipliers
-			Vector<DataType,Dynamic> startPoint(m+n);
-			startPoint.head(m) = (A*invWAt).ldlt().solve(A*xd - y);                     // Initial guess for the Lagrange multipliers
-			startPoint.tail(n) = x0;
-			
-			this->lastSolution = solve(H,f,newB,z,startPoint).tail(n);                  // Discard Lagrange multipliers
-						
-			break;
-		}
-		default:
-		{
-			throw runtime_error("[ERROR] [QP SOLVER] constrained_least_squares(): "
-			                    "Method was neither 'dual' nor 'primal'. "
-			                    "How did that happen?");
-		}
+		return x0;
 	}
-	
-	return this->lastSolution;
+	else
+	{
+		throw runtime_error("[ERROR] [QP SOLVER] constrained_least_squares(): "
+		                    "Method for solving redundant least squares was neither 'dual' "
+		                    "nor 'primal'. How did that happen?");
+	}
 }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -487,156 +551,30 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
                           const Vector<DataType,Dynamic>           &z,
                           const Vector<DataType,Dynamic>           &x0)
 {
-	unsigned int dim = x0.rows();                                                               // Number of dimensions
-
-	unsigned int numConstraints = B.rows();                                                     // As it says
-	
-	// Check that the inputs are sound
+	// Ensure arguments are sound
 	if(H.rows() != H.cols())
 	{
-		throw invalid_argument("[ERROR] [QP SOLVER] solve(): Expected a square matrix for the Hessian "
-		                       "but it was " + to_string(H.rows()) + "x" + to_string(H.cols()) + ".");
+		throw invalid_argument("[ERROR] [QP SOLVER] solve(): "
+		                       "Expected the Hessian matrix H to be square but it was " 
+		                       + to_string(H.rows()) + "x" + to_string(H.cols()) + ".");
 	}
-	else if(H.rows() != dim or f.rows() != dim or B.cols() != dim)
+	else if(H.cols() != f.size() or f.size() != B.cols() or B.cols() != x0.size())
 	{
-		throw invalid_argument("[ERROR] [QP SOLVER] solve(): Dimensions for the decision variable do not match. "
-		                       "The Hessian was " + to_string(H.rows()) + "x" + to_string(H.cols()) + ", "
-		                       "the f vector was " + to_string(f.rows()) + "x1, "
-		                       "the constraint matrix had " + to_string(B.cols()) + " columns, and "
-		                       "the start point was " + to_string(x0.rows()) + "x1.");
+		throw invalid_argument("[ERROR] [QP SOLVER] solve(): "
+		                       "Dimensions of arguments for decision variable do not match. "
+		                       "The Hessian matrix had " + to_string(H.cols()) + " rows/columns, "
+		                       "the vector f had " + to_string(f.size()) + " elements, "
+		                       "the inequality constraint matrix B had " + to_string(B.cols()) + " columns, and "
+		                       "the start point x0 had " + to_string(x0.size()) + " elements.");
 	}
-	else if(B.rows() != z.rows())
+	else if(B.rows() != z.size())
 	{
-		throw invalid_argument("[ERROR] [QP SOLVER] solve(): Dimensions for the constraints do not match. "
-		                       "The constraint matrix had " + to_string(B.rows()) + " rows, and "
-		                       "the constraint vector had " + to_string(z.rows()) + " rows.");
+		throw invalid_argument("[ERROR] [QP SOLVER] solve(): "
+		                       "Dimensions for inequality constraint do not match. "
+		                       "The inequality constraint matrix B had " + to_string(B.rows()) + " rows, and "
+		                       "the inequality constraint vector z had " + to_string(z.size()) + " elements.");
 	}
 	
-	// Solve the following optimization problem with Guass-Newton method:
-	//
-	//    min f(x) = 0.5*x'*H*x + x'*f - u*sum(log(d_i))
-	//
-	// where d_i = z_i - b_i*x is the distance to the constraint
-	//
-	// Then the gradient and Hessian are:
-	//
-	//    g(x) = H*x + f - u*sum((1/d_i)*b_i')
-	//
-	//    I(x) = H + u*sum((1/(d_i^2))*b_i'*b_i)
-	
-	// Local variables
-	DataType u;                                                                                 // Scalar for the barrier function
-	DataType alpha;                                                                             // Scalar on the Newton step
-	
-	Vector<DataType, Dynamic> g(dim);                                                           // Gradient vector
-	Vector<DataType, Dynamic> x = x0;                                                           // Value to be returned
-	Vector<DataType, Dynamic> dx(dim);                                                          // Newton step = -I^-1*g
-	Matrix<DataType, Dynamic, Dynamic> I;                                                       // Hessian with added barrier function
-
-	vector<DataType> d; d.resize(numConstraints);                                               // Distance to every constraint
-	
-	// Make sure the start point is inside the constraints	
-	Matrix<DataType,Dynamic,1> blah(dim);
-	
-	if(numConstraints < dim) blah = B.transpose()*(B*B.transpose()).ldlt().solve(z);            // Project constraint back to state space
-	else                     blah = (B.transpose()*B).ldlt().solve(B.transpose()*z);
-	
-	for(int i = 0; i < dim; i++)
-	{
-		if(x(i) >= blah(i))                                                                 // If a single element violates constraints...
-		{
-			x = blah;                                                                   // ... override the start point
-			break;                                                                      // Break the loop
-		}
-	}
-	
-	// Do some pre-processing
-	vector<Matrix<DataType,Dynamic,1>> bt(numConstraints);                                      // Row vectors of B matrix transposed
-	vector<Matrix<DataType,Dynamic,Dynamic>> btb(numConstraints);                               // Outer product of row vectors
-	
-	for(int j = 0; j < numConstraints; j++)
-	{
-		bt[j]  = B.row(j).transpose();                                                      // Row vector converted to column vector
-		btb[j] = B.row(j).transpose()*B.row(j);                                             // Outer product of row vectors		
-	}
-
-	// Run the interior point algorithm
-	for(int i = 0; i < this->maxSteps; i++)
-	{
-		// (Re)set values for new loop
-		I = H;                                                                              // Hessian for log-barrier function
-		g.setZero();                                                                        // Gradient vector
-		this->numSteps = i+1;                                                               // Save the number of steps taken
-		
-		// Compute distance to each constraint
-		for(int j = 0; j < numConstraints; j++)
-		{
-			d[j] =   z(j) - bt[j].dot(x);                                               // Distance to the jth constraint
-			
-			g   += -(u/d[j])*bt[j];                                                     // Add up gradient vector
-			I   +=  (u/(d[j]*d[j]))*btb[j];                                             // Add up Hessian
-		}
-		
-		g += H*x + f;                                                                       // Finish summation of gradient vector
-
-		dx = I.ldlt().solve(-g);                                                            // Robust Cholesky decomp
-		
-		for(int j = 0; j < dx.size(); j++)
-		{
-			if(isnan(dx(j)))
-			{
-				throw runtime_error("[ERROR] [QP SOLVER] nan for element " + to_string(j) + ". How did that happen?!");
-			}
-		}
-		
-		// Ensure the next position is within the constraint
-		alpha = this->alpha0;                                                               // Reset the scalar for the step size
-		
-		for(int j = 0; j < numConstraints; j++)
-		{
-			DataType dotProduct = bt[j].dot(dx);                                        // Makes calcs a little easier
-			
-			if( alpha*dotProduct >= d[j] )                                              // If constraint violated on next step...
-			{
-				DataType ratio = abs(d[j]/dotProduct);                              // Compute optimal scalar to avoid constraint violation
-				
-				if(ratio < alpha) alpha = 0.95*ratio;                               // If smaller, override
-			}
-		}
-		
-		this->stepSize = alpha*dx.norm();                                                   // As it says on the label
-		
-		if(this->stepSize < this->tol) break;
-		
-		// Update values for next loop
-		u *= beta;                                                                          // Decrease barrier function
-		x += alpha*dx;                                                                      // Increment state
-	}
-		
-	this->lastSolution = x;                                                                     // Save this value for future use
-	
-	return x;                                                                                   // Return the solution
-}
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
- //            Set the step size scalar in the interior point algorith: x += alpha*dx             //
-///////////////////////////////////////////////////////////////////////////////////////////////////
-template <class DataType>
-bool QPSolver<DataType>::set_step_scalar(const DataType &scalar)
-{
-	if(scalar <= 0)
-	{
-		cerr << "[ERROR] [QP SOLVER] set_step_size(): "
-		     << "Input argument was " << to_string(scalar) << " but it must be positive.\n";
-	
-		return false;
-	}
-	else
-	{
-		this->alpha0 = scalar;
-		
-		return true;
-	}
 }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////

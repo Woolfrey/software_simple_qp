@@ -217,6 +217,7 @@ int main(int argc, char *argv[])
 	          << "BUT, the QP solver is able to satisfy them!\n";
 	          
 
+/*
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                CONSTRAINED SYSTEMS (REDUNDANT CASE)                *\n"
 	          <<   "**********************************************************************\n" << std::endl;
@@ -307,6 +308,7 @@ int main(int argc, char *argv[])
 	catch(const std::exception &exception)
 	{
 		std::cout << exception.what() << std::endl;
-	}     
+	}   
+	*/
 	return 0; 
 }

@@ -221,10 +221,10 @@ class QPSolver
 		
 	private:
 		
-		DataType tol = 1e-04;                                                               ///< Minimum value for the step size before terminating the interior point algorithm.
+		DataType tol = 1e-03;                                                               ///< Minimum value for the step size before terminating the interior point algorithm.
 		DataType stepSize;                                                                  ///< Step size on the final iteration of the interior point algorithm.
-		DataType barrierReductionRate = 1e-03;                                               ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
-		DataType initialBarrierScalar = 1000;                                               ///< Starting value for the constraint barrier scalar in the interior point algorithm.
+		DataType barrierReductionRate = 1e-02;                                              ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
+		DataType initialBarrierScalar = 10;                                                 ///< Starting value for the constraint barrier scalar in the interior point algorithm.
 		
 		enum Method {dual, primal} method = primal;                                         ///< Used to select which method to solve for with redundant least squares problems.                                               
 		
@@ -575,6 +575,103 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 		                       "the inequality constraint vector z had " + to_string(z.size()) + " elements.");
 	}
 	
+	// h = 0.5*x'*H*x + x'*f - sum log(d_i),   d_i = z_i - b_i'*x
+	// g = H*x + f + sum (1/d_i)*b_i
+	// I = H + sum (1/d_i^2)*b_i*b_i'
+	
+	// Variables used in this scope
+	DataType u = this->initialBarrierScalar;                                                    // As it says
+	unsigned int dim = x0.size();                                                               // Dimensions of the decision varialbe
+	unsigned int numConstraints = z.size();                                                     // As it says
+	Matrix<DataType,Dynamic,Dynamic> I(dim,dim);                                                // Hessian matrix
+	Vector<DataType,Dynamic> g(dim);                                                            // Gradient vector
+	vector<DataType> d(numConstraints);                                                         // Distance to every constraint
+	vector<Vector<DataType,Dynamic>> b(numConstraints);                                         // Row vectors of constraint matrix (transposed)
+	vector<Matrix<DataType,Dynamic,Dynamic>> bbt(numConstraints);                               // Outer product of row vectors
+	Vector<DataType,Dynamic> x(dim);                                                            // We want to solve for this
+	
+	// Do some pre-processing
+	bool initialConstraintViolated = false;
+	for(int j = 0; j < numConstraints; j++)
+	{
+		b[j]   = B.row(j).transpose();                                                      // Transpose the row vector
+		bbt[j] = b[j]*b[j].transpose();                                                     // Compute the outer product
+
+		d[j] = z(j) - b[j].dot(x0);                                                         // Distance to constraint
+		
+		if(d[j] <= 0)
+		{
+			initialConstraintViolated = true;                                           // Flag
+			d[j] = this->tol;                                                           // Set a small, but non-zero value
+		}
+		
+		g += (u/d[j])*b[j];                                                                 // Add up the gradient
+	}
+	
+	// Set the start point
+	if(initialConstraintViolated) x = -H.ldlt().solve(f+g);                                     // Point where gradient is zero
+	else                          x = x0;                                                       // Given start point
+	
+	for(int j = 0; j < numConstraints; j++)
+	{
+		if(z(j) - b[j].dot(x) <= 0) throw runtime_error("START POINT OUTSIDE CONSTRAINTS.");
+	}
+	
+	Vector<DataType,Dynamic> xPrev;
+	
+	// Run the interior point algorithm
+	for(int i = 0; i < this->maxSteps; i++)
+	{
+		this->numSteps = i+1;                                                               // Increment the counter
+		
+		// (Re)set values for new loop
+		g = H*x + f;
+		I = H;
+		
+		// Compute distance to every constraint
+		for(int j = 0; j < numConstraints; j++)
+		{
+			d[j] = z(j) - b[j].dot(x);                                                  // Distance to constraint
+			
+			if(d[j] <= 0)
+			{
+				d[j] = this->tol;
+				  u /= this->barrierReductionRate;
+				  x = xPrev;
+			}
+		
+			g += (u/d[j])*b[j];                                                        // Add up gradient
+			I += (u/(d[j]*d[j]))*bbt[j];                                              // Add up Hessian
+		}
+
+		Vector<DataType,Dynamic> dx = I.ldlt().solve(-g);                                   // Compute Newton step
+		
+		// Compute scalar for step size so that constraint is not violated
+		// next step: d_j - b_j'*dx > 0 ---> b_j'*dx < d_j
+		DataType alpha = 1.0;
+		for(int j = 0; j < numConstraints; j++)
+		{
+			DataType dotProd = b[j].dot(dx);                                            // Makes calcs a little easier
+			
+			if(d[j] - dotProd <= 0) alpha = 0.90*d[j]/dotProd;
+		}
+		
+		dx *= alpha;
+		
+		this->stepSize = dx.norm();                                                         // Magnitude of the step size
+		
+		if(this->stepSize < this->tol) break;                                               // If smaller than tolerance, break
+		
+		// Increment values for next loop
+		xPrev = x;
+		x += dx;                                                                            // Increment state
+		u *= this->barrierReductionRate;                                                    // Reduce barrier
+	
+	}
+	
+	this->lastSolution = x;                                                                     // Save the value
+	
+	return x;
 }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////

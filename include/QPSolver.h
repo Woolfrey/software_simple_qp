@@ -171,7 +171,7 @@ class QPSolver
 		 * @param number As it says.
 		 * @return Returns false if the input argument is invalid.
 		 */
-		bool set_num_steps(const unsigned int &number);
+		bool set_max_steps(const unsigned int &number);
 		
 		/**
 		 * Set the scalar for the constraint barriers in the interior point aglorithm.
@@ -221,10 +221,10 @@ class QPSolver
 		
 	private:
 		
-		DataType tol = 1e-03;                                                               ///< Minimum value for the step size before terminating the interior point algorithm.
+		DataType tol = 1e-02;                                                               ///< Minimum value for the step size before terminating the interior point algorithm.
 		DataType stepSize;                                                                  ///< Step size on the final iteration of the interior point algorithm.
-		DataType barrierReductionRate = 1e-02;                                              ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
-		DataType initialBarrierScalar = 10;                                                 ///< Starting value for the constraint barrier scalar in the interior point algorithm.
+		DataType barrierReductionRate = 1e-03;                                              ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
+		DataType initialBarrierScalar = 100;                                                ///< Starting value for the constraint barrier scalar in the interior point algorithm.
 		
 		enum Method {dual, primal} method = primal;                                         ///< Used to select which method to solve for with redundant least squares problems.                                               
 		
@@ -492,9 +492,9 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 	
 	if(this->method == primal)
 	{	
-		unsigned int c = B.rows();
-		unsigned int m = A.rows();
-		unsigned int n = A.cols();
+		unsigned int c = B.rows();                                                          // Number of inequality constraints
+		unsigned int m = A.rows();                                                          // Number of equality constraints
+		unsigned int n = A.cols();                                                          // Decision variable
 		
 		// H = [  0  -A ]
 		//     [ -A'  W ]
@@ -527,10 +527,19 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 	}
 	else if(this->method == dual)
 	{
-		std::cerr << "[ERROR] [QP SOLVER] constrained_least_squares(): "
-		          << "Dual method has not been programmed in.\n";
+		// x = xd + W^-1*A'*lambda
 		
-		return x0;
+		// lambda = (A*W^-1*A')^-1*(y - A*xd)
+		
+		Matrix<DataType,Dynamic,Dynamic> invWAt = W.ldlt().solve(A.transpose());            // Makes calcs a little easier
+		
+		Matrix<DataType,Dynamic,Dynamic> H = A*invWAt;                                      // Hessian matrix for dual problem
+		
+		Vector<DataType,Dynamic> f = A*xd - y;                                              // Linear component of QP
+		
+		this->lastSolution = xd + invWAt*solve(H,f,B*invWAt,z-B*xd,H.ldlt().solve(y-A*xd));
+		
+		return this->lastSolution;
 	}
 	else
 	{
@@ -599,25 +608,19 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 
 		d[j] = z(j) - b[j].dot(x0);                                                         // Distance to constraint
 		
-		if(d[j] <= 0)
-		{
-			initialConstraintViolated = true;                                           // Flag
-			d[j] = this->tol;                                                           // Set a small, but non-zero value
-		}
-		
-		g += (u/d[j])*b[j];                                                                 // Add up the gradient
+		if(d[j] <= 0) initialConstraintViolated = true;                                     // Flag
 	}
 	
 	// Set the start point
-	if(initialConstraintViolated) x = -H.ldlt().solve(f+g);                                     // Point where gradient is zero
-	else                          x = x0;                                                       // Given start point
-	
-	for(int j = 0; j < numConstraints; j++)
+	if(initialConstraintViolated)
 	{
-		if(z(j) - b[j].dot(x) <= 0) throw runtime_error("START POINT OUTSIDE CONSTRAINTS.");
+		Vector<DataType,Dynamic> dz = 1e-03*Vector<DataType,Dynamic>::Ones(numConstraints);       
+		
+		     if(numConstraints > dim) x = (B.transpose()*B).ldlt().solve(B.transpose()*(z - dz));
+		else if(numConstraints < dim) x =  B.transpose()*(B*B.transpose()).ldlt().solve(z - dz);
+		else			      x =  B.partialPivLu().solve(z - dz);
 	}
-	
-	Vector<DataType,Dynamic> xPrev;
+	else	x = x0;                                                                             // Given start point
 	
 	// Run the interior point algorithm
 	for(int i = 0; i < this->maxSteps; i++)
@@ -625,48 +628,45 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 		this->numSteps = i+1;                                                               // Increment the counter
 		
 		// (Re)set values for new loop
-		g = H*x + f;
-		I = H;
+		g = H*x + f;                                                                        // Gradient vector
+		I = H;                                                                              // Hessian matrix
 		
 		// Compute distance to every constraint
 		for(int j = 0; j < numConstraints; j++)
 		{
 			d[j] = z(j) - b[j].dot(x);                                                  // Distance to constraint
 			
-			if(d[j] <= 0)
+			if(i == 0 and d[j] <= 0)
 			{
-				d[j] = this->tol;
-				  u /= this->barrierReductionRate;
-				  x = xPrev;
+				throw runtime_error("[ERROR] [QP SOLVER] solve(): Unable to find a solution that satisfies constraints.");
 			}
-		
-			g += (u/d[j])*b[j];                                                        // Add up gradient
-			I += (u/(d[j]*d[j]))*bbt[j];                                              // Add up Hessian
+			
+			if(d[j] <= 0) d[j] = 1e-03;                                                 // Constraint violated; set a small, but non-zero distance
+		 
+			g += (u/d[j])*b[j];                                                         // Add up gradient
+			I += (u/(d[j]*d[j]))*bbt[j];                                                // Add up Hessian
 		}
 
 		Vector<DataType,Dynamic> dx = I.ldlt().solve(-g);                                   // Compute Newton step
 		
-		// Compute scalar for step size so that constraint is not violated
-		// next step: d_j - b_j'*dx > 0 ---> b_j'*dx < d_j
+		// Compute scalar for step size so that constraint is not violated on next step
 		DataType alpha = 1.0;
 		for(int j = 0; j < numConstraints; j++)
 		{
 			DataType dotProd = b[j].dot(dx);                                            // Makes calcs a little easier
 			
-			if(d[j] - dotProd <= 0) alpha = 0.90*d[j]/dotProd;
+			if(d[j] - dotProd <= 0) alpha = min(alpha,0.9*d[j]/dotProd);                // Shrink scalar if constraint violated
 		}
 		
-		dx *= alpha;
+		dx *= alpha;                                                                        // Scale the step
 		
 		this->stepSize = dx.norm();                                                         // Magnitude of the step size
 		
-		if(this->stepSize < this->tol) break;                                               // If smaller than tolerance, break
+		if(this->stepSize <= this->tol) break;                                              // If smaller than tolerance, break
 		
 		// Increment values for next loop
-		xPrev = x;
 		x += dx;                                                                            // Increment state
 		u *= this->barrierReductionRate;                                                    // Reduce barrier
-	
 	}
 	
 	this->lastSolution = x;                                                                     // Save the value
@@ -689,7 +689,7 @@ bool QPSolver<DataType>::set_barrier_reduction_rate(const DataType &rate)
 	}
 	else
 	{
-		this->beta = rate;
+		this->barrierRedunctionRate = rate;
 		
 		return true;
 	}
@@ -720,7 +720,7 @@ bool QPSolver<DataType>::set_tolerance(const DataType &tolerance)
  //            Set the number of steps in the interior point method before terminating            //
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType>
-bool QPSolver<DataType>::set_num_steps(const unsigned int &number)
+bool QPSolver<DataType>::set_max_steps(const unsigned int &number)
 {
 	if(number == 0)
 	{
@@ -731,7 +731,7 @@ bool QPSolver<DataType>::set_num_steps(const unsigned int &number)
 	}
 	else
 	{
-		this->steps = number;
+		this->maxSteps = number;
 		
 		return true;
 	}
@@ -752,7 +752,7 @@ bool QPSolver<DataType>::set_barrier_scalar(const DataType &scalar)
 	}
 	else
 	{
-		this->u0 = scalar;
+		this->initialBarrierScalar = scalar;
 		
 		return true;
 	}

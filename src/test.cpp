@@ -216,8 +216,6 @@ int main(int argc, char *argv[])
 	std::cout << "\nThere is signicant error because the real solution lies outside the constraints.\n"
 	          << "BUT, the QP solver is able to satisfy them!\n";
 	          
-
-/*
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                CONSTRAINED SYSTEMS (REDUNDANT CASE)                *\n"
 	          <<   "**********************************************************************\n" << std::endl;
@@ -247,46 +245,45 @@ int main(int argc, char *argv[])
 	
 	std::cout << "\nWe would call: 'solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0)'\n";
 	
-	std::cout << "\nHere is the solution for a " << m << "x" << n << " system using the dual method:\n";
+	std::cout << "\nHere is the solution for a " << m << "x" << n << " system using the primal method:\n";
 	
 	timer = clock();
+
+	solver.set_tolerance(2.0);
+	
+	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
+
+	timer = clock() - timer;
+	float t1  = (float)timer/CLOCKS_PER_SEC;
+	
+	comparison.resize(n,3); 
+	comparison.col(0) = xMin;
+	comparison.col(1) = x;
+	comparison.col(2) = xMax;
+	std::cout << "\n" << comparison << std::endl;
+	
+	for(int i = 0; i < x.size(); i++)
+	{
+		if(x(i) <= xMin(i) or x(i) >= xMax(i))
+		{
+			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
+			break;
+		}
+	}
+		
+	float error1 = (y - A*x).norm();
+	
+	std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
+		  <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
+		  
+	std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n\n";
+	
 	try
 	{
-		solver.set_tolerance(1e-04);
+		solver.use_dual();
 		
-		x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
-
-		timer = clock() - timer;
-		float t1  = (float)timer/CLOCKS_PER_SEC;
+		solver.set_tolerance(1e-02);
 		
-		comparison.resize(n,3); 
-		comparison.col(0) = xMin;
-		comparison.col(1) = x;
-		comparison.col(2) = xMax;
-		std::cout << "\n" << comparison << std::endl;
-		
-		for(int i = 0; i < x.size(); i++)
-		{
-			if(x(i) <= xMin(i) or x(i) >= xMax(i))
-			{
-				std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
-				break;
-			}
-		}
-		
-		float error1 = (y - A*x).norm();
-		
-		std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
-			  <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
-			  
-		std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n\n";
-
-		solver.use_primal();
-		
-		solver.set_tolerance(1e-04);
-		
-		std::cout << "\nUsing the primal method we get:\n";
-
 		timer = clock();
 		x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
 		timer = clock() - timer;
@@ -294,21 +291,25 @@ int main(int argc, char *argv[])
 		
 		float error2 = (y - A*x).norm();
 		
+		std::cout << "\nUsing the dual method we get:\n";
+		
 		comparison.col(1) = x;
 		std::cout << "\n" << comparison << std::endl;
 		
 		std::cout << "\nThe error ||y - A*x|| is: " << error2/y.norm() << ", "
 			  <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
 			  
-		std::cout << "\nThe dual method was " << t2/t1 << " times faster. ";
+		std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n";
+			  
+		std::cout << "\nThe dual method was " << t1/t2 << " times faster. ";
 		
-		if(error1 > error2) std::cout << "The primal method was " << error1/error2 << " times more accurate.\n";
-		else                std::cout << "The dual method was " << error2/error1 << " times more accurate.\n";
+		if(error1 > error2) std::cout << "The dual method was " << error1/error2 << " times more accurate.\n";
+		else                std::cout << "The primal method was " << error2/error1 << " times more accurate.\n";
 	}
 	catch(const std::exception &exception)
 	{
 		std::cout << exception.what() << std::endl;
 	}   
-	*/
+
 	return 0; 
 }

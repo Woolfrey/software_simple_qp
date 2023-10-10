@@ -535,9 +535,25 @@ QPSolver<DataType>::constrained_least_squares(const Vector<DataType, Dynamic>   
 		
 		Matrix<DataType,Dynamic,Dynamic> H = A*invWAt;                                      // Hessian matrix for dual problem
 		
-		Vector<DataType,Dynamic> f = A*xd - y;                                              // Linear component of QP
+		LDLT<Matrix<DataType,Dynamic,Dynamic>> Hdecomp(H);                                  // Saves a bit of time
 		
-		this->lastSolution = xd + invWAt*solve(H,f,B*invWAt,z-B*xd,H.ldlt().solve(y-A*xd));
+		Vector<DataType,Dynamic> xr = invWAt*(H,-y,B*invWAt,z,Hdecomp.solve(y));            // Solve the range space
+		
+		Vector<DataType,Dynamic> xn = xd - invWAt*Hdecomp.solve(A*xd);                      // Compute null space component
+		
+		DataType alpha = 1.0;
+		for(int i = 0; i < z.size(); i++)
+		{
+			DataType a = B.row(i).dot(xr);
+			
+			DataType b = B.row(i).dot(xn);
+			
+			DataType dist = z(i) - a - b;
+			
+			if(dist <= 0) alpha = min(alpha, 0.99*abs((dist - a)/b));
+		}
+		
+		this->lastSolution = xr + alpha*xn;
 		
 		return this->lastSolution;
 	}
@@ -614,13 +630,13 @@ QPSolver<DataType>::solve(const Matrix<DataType, Dynamic, Dynamic> &H,
 	// Set the start point
 	if(initialConstraintViolated)
 	{
-		Vector<DataType,Dynamic> dz = 1e-03*Vector<DataType,Dynamic>::Ones(numConstraints);       
+		Vector<DataType,Dynamic> dz = 1e-03*Vector<DataType,Dynamic>::Ones(numConstraints);       // Add a tiny offset so we're not exactly on the constraint      
 		
-		     if(numConstraints > dim) x = (B.transpose()*B).ldlt().solve(B.transpose()*(z - dz));
-		else if(numConstraints < dim) x =  B.transpose()*(B*B.transpose()).ldlt().solve(z - dz);
-		else			      x =  B.partialPivLu().solve(z - dz);
+		     if(numConstraints > dim) x = (B.transpose()*B).ldlt().solve(B.transpose()*(z - dz)); // Underdetermined system
+		else if(numConstraints < dim) x =  B.transpose()*(B*B.transpose()).ldlt().solve(z - dz);  // Overdetermined system
+		else			      x =  B.partialPivLu().solve(z - dz);                        // Exact solution
 	}
-	else	x = x0;                                                                             // Given start point
+	else	x = x0;                                                                                   // Given start point
 	
 	// Run the interior point algorithm
 	for(int i = 0; i < this->maxSteps; i++)

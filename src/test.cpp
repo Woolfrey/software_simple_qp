@@ -276,13 +276,16 @@ int main(int argc, char *argv[])
 	std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
 		  <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
 		  
-	std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n\n";
+	std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n";
+	
+	std::cout << "\nThe objective function error is: "
+	          << (A.transpose()*(A*A.transpose()).ldlt().solve(A*x)).norm() << ".\n\n";
 	
 	try
 	{
 		solver.use_dual();
 		
-		solver.set_tolerance(1e-02);
+		solver.set_tolerance(2.0);
 		
 		timer = clock();
 		x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
@@ -300,7 +303,10 @@ int main(int argc, char *argv[])
 			  <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
 			  
 		std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n";
-			  
+		
+		std::cout << "\nThe objective function error is: "
+	       		  << (A.transpose()*(A*A.transpose()).ldlt().solve(A*x)).norm() << ".\n";
+
 		std::cout << "\nThe dual method was " << t1/t2 << " times faster. ";
 		
 		if(error1 > error2) std::cout << "The dual method was " << error1/error2 << " times more accurate.\n";

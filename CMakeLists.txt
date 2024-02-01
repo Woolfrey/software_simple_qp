@@ -18,6 +18,6 @@ find_package(Eigen3 REQUIRED)                                                   
 
 include_directories(include)                                                             # Location of header files
 
-add_executable(test src/test.cpp)                                                        # Declare location of source files for executable
+add_executable(test test/test.cpp)                                                       # Declare location of source files for executable
 
 target_link_libraries(test Eigen3::Eigen)                                                # Link Eigen libraries to the executable

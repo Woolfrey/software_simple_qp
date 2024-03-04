@@ -1,4 +1,4 @@
-# SimpleQPSolver
+# Simple QP Solver
 A small, efficient class for solving convex optimisation problems. A generic quadratic programming (QP) problem is of the form:
 ```math
 \begin{align}
@@ -21,12 +21,14 @@ There are also several functions for handling linear least squares problems with
 - [Installation Instructions](#installation-instructions)
 	- [Installing Eigen](#installing-eigen)
  	- [Installing SimpleQPSolver](#installing-simpleqpsolver)
+	- [Automatic Download in Another Package](#automatic-download-in-another-package)
 - [Using the QP Solver](#using-the-qp-solver)
   	- [A Generic QP Problem](#a-generic-qp-problem)
    	- [Linear Least Squares](#linear-least-squares-linear-regression)
    	- [Least Squares with Equality Constraints](#least-squares-with-equality-constraints-over-determined-systems)
    	 - [Optimisation with Inequality Constraints](#optimisation-with-inequality-constraints)
    	- [Options for the Interior Point Algorithm](#options-for-the-interior-point-algorithm)
+   	- [Running the Test File](#running-the-test-file)
 - [Citing this Repository](#citing-this-repository)
 
 ## Installation Instructions
@@ -49,34 +51,19 @@ SimpleQPSolver/include/QPSolver.h
 ```
 That is all!
 
-_If you want to build the package for some reason..._ there is a simple `test.cpp` file you can run that demonstrates the use of the `QPSolver` class. First navigate to your working directory:
+_If you want to build the package for some reason..._ there is a simple `test.cpp` file [you can run](#running-the-test-file) that demonstrates the use of the `QPSolver` class.
 
+### Automatic Download in Another Package
+It is possible to automatically download the `QPSolver.h` header file as part of another package. In your `CMakeLists.txt` file you can add something like:
 ```
-cd ~/MyWorkspace
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/your_package/include/QPSolver.h")
+	file(DOWNLOAD
+	     https://raw.githubusercontent.com/Woolfrey/software_simple_qp/master/include/QPSolver.h
+	     ${CMAKE_SOURCE_DIR}/your_package/include/QPSolver.h)
+endif()
 ```
-Then clone the repository:
-```
-git clone https://github.com/Woolfrey/SimpleQPSolver.git
-```
-Create a build folder and navigate to it:
-```
-cd SimpleQPSolver/ && mkdir build && cd build
-```
-Generate the build tools using:
-```
-cmake ../
-```
-Then build the package with:
-```
-make
-```
-You can then run
-```
-./test
-```
-which prints information about the use of different class methods, as well as the accuracy and speed of solutions.
 
-:arrow_backward: [Go Back.](#simpleqpsolver)
+:arrow_backward: [Go Back.](#simple-qp-solver)
 
 ## Using the QP Solver
 
@@ -202,7 +189,7 @@ Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0);
 ```
 :warning: When using this particular function the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
 
-:arrow_backward: [Go Back.](#simpleqpsolver)
+:arrow_backward: [Go Back.](#simple-qp-solver)
 
 ### Options for the Interior Point Algorithm
 
@@ -213,7 +200,39 @@ There are several parameters that can be set when solving for inequality constai
 - `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
 - `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
 
-:arrow_backward: [Go Back.](#simpleqpsolver)
+:arrow_backward: [Go Back.](#simple-qp-solver)
+
+### Running the Test File
+
+First navigate to your working directory:
+```
+cd ~/MyWorkspace
+```
+Then clone the repository:
+```
+git clone https://github.com/Woolfrey/SimpleQPSolver.git
+```
+Create a build folder and navigate to it:
+```
+cd SimpleQPSolver/ && mkdir build && cd build
+```
+Generate the build tools using:
+```
+cmake ../
+```
+Then build the package with:
+```
+make
+```
+You can then run
+```
+./test
+```
+which prints information about the use of different class methods, as well as the accuracy and speed of solutions.
+
+<img src="https://github.com/Woolfrey/software_simple_qp/assets/62581255/8ecb93a6-e45b-4ff9-aebf-1f2f27c62f25" width="600" height="auto">
+
+:arrow_backward: [Go back.](#simple-qp-solver)
 
 ## Citing this Repository
 If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
@@ -221,16 +240,18 @@ If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could c
 @software{Woolfrey_SimpleQPSolver_2023,
      author  = {Woolfrey, Jon},
      month   = aug,
-     title   = {{SimpleQPSolver}},
-     url     = {https://github.com/Woolfrey/SimpleQPSolver},
+     title   = {{S}imple {QP} {S}olver},
+     url     = {https://github.com/Woolfrey/software_simple_qp},
      version = {1.0.0},
      year    = {2023}
 }
 ```
 Here's the automatically generated APA format:
 ```
-Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/SimpleQPSolver
+Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/software_simple_qp
 ```
 Alternatively, click on `Cite this repository` on the top-right corner of this page.
 
-:arrow_backward: [Go Back.](#simpleqpsolver)
+:arrow_backward: [Go Back.](#simple-qp-solver)
+
+

@@ -15,7 +15,11 @@ where:
 
 There are also several functions for handling linear least squares problems with equality and inequality constraints.
 
-`SimpleQPSolver` is **free to use** under the GNU General Public License v3.0. If you find this software useful, [citing it](#citing-this-repository) would be appreciated.
+`Simple QP Solver` is **free to use** under the GNU General Public License v3.0. If you find this software useful, [citing it](#citing-this-repository) would be appreciated.
+
+It is fast, and effective. It has been used to control the upper body of a humanoid robot subject to grasp constraints and joint limits:
+
+<img src = "https://github.com/Woolfrey/software_simple_qp/blob/master/bimanual_manipulation.gif">
 
 **Jump To:**
 - [Installation Instructions](#installation-instructions)

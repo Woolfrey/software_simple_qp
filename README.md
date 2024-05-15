@@ -13,14 +13,15 @@ where:
 - $\mathbf{B}\in\mathbb{R}^\mathrm{c\times n}$ is a constraint matrix, and
 - $\mathbf{z}\in\mathbb{R}^\mathrm{c}$ is a constraint vector.
 
-There are also several functions for handling linear least squares problems with equality and inequality constraints.
+There are also several functions for handling linear least squares problems with equality and inequality constraints. It is fast, and effective. It has been used to control the upper body of a humanoid robot subject to grasp constraints and joint limits.
 
-`Simple QP Solver` is **free to use** under the GNU General Public License v3.0. If you find this software useful, [citing it](#citing-this-repository) would be appreciated.
-
-It is fast, and effective. It has been used to control the upper body of a humanoid robot subject to grasp constraints and joint limits:
 <p align="center">
-	<img src = "https://github.com/Woolfrey/software_simple_qp/blob/master/bimanual_manipulation.gif">
+	<img src="https://github.com/Woolfrey/software_simple_qp/raw/master/bimanual_manipulation.gif" width=200 height="auto"/>
 </p>
+
+>[!NOTE]
+> Simple QP Solver is **free to use** under the GNU General Public License v3.0. If you find this software useful, [citing it](#citing-this-repository) would be appreciated.
+
 
 **Jump To:**
 - [Installation Instructions](#installation-instructions)
@@ -38,7 +39,7 @@ It is fast, and effective. It has been used to control the upper body of a human
 
 ## Installation Instructions
 
-### Installing Eigen
+### Installing Eigen:
 
 The `SimpleQPSolver` requires the `Eigen` libraries. If you're using Linux you can install it from the command line:
 
@@ -47,18 +48,20 @@ sudo apt install libeigen3-dev
 ```
 Otherwise, you can head over to the [main page](https://eigen.tuxfamily.org/index.php?title=Main_Page) to see how you can install it.
 
-### Installing SimpleQPSolver
+### Installing SimpleQPSolver:
 
 SimpleQPSolver is a template class contained in a single header file. There is no need to clone this repository and build any packages (unless you want to, of course). All you need to do is download the header file `QPSolver.h` and include it in your package:
 
 ```
-SimpleQPSolver/include/QPSolver.h
+software_simple_qp/include/QPSolver.h
 ```
 That is all!
 
-_If you want to build the package for some reason..._ there is a simple `test.cpp` file [you can run](#running-the-test-file) that demonstrates the use of the `QPSolver` class.
+>[!NOTE]
+> If you want to build the package for some reason, there is a simple `test.cpp` file [you can run](#running-the-test-file) that demonstrates the use of the `QPSolver` class.
 
-### Automatic Download in Another Package
+### Automatic Download in Another Package:
+
 It is possible to automatically download the `QPSolver.h` header file as part of another package. In your `CMakeLists.txt` file you can add something like:
 ```
 if(NOT EXISTS "${CMAKE_SOURCE_DIR}/your_package/include/QPSolver.h")
@@ -67,8 +70,7 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/your_package/include/QPSolver.h")
 	     ${CMAKE_SOURCE_DIR}/your_package/include/QPSolver.h)
 endif()
 ```
-
-:arrow_backward: [Go Back.](#simple-qp-solver)
+[:arrow_backward: Go Back.](#simple-qp-solver)
 
 ## Using the QP Solver
 
@@ -85,7 +87,7 @@ Methods with inequality constraints, e.g. $\mathbf{Bx \le z}$, or $\mathbf{x_\ma
 
 Some examples are below.
 
-### A Generic QP Problem
+### A Generic QP Problem:
 
 ```math
 \min_{\mathbf{x}} \frac{1}{2}\mathbf{x^\mathrm{T} Hx + x^\mathrm{T}f}
@@ -94,9 +96,10 @@ Assuming $\mathbf{H}$ and $\mathbf{f}$ are given, then you can call:
 ```
 Eigen::VectorXd x = QPSolver<double>::solve(H,f);
 ```
-You can actually solve this yourself by calling something like `x = H.ldlt().solve(-f)`, but I put this function in for completeness.
+>[!NOTE]
+> You can actually solve this yourself by calling something like `x = H.ldlt().solve(-f)`, but I put this function in for completeness.
 
-### Linear Least Squares (Linear Regression)
+### Linear Least Squares (Linear Regression):
 
 ```math
 \min_{\mathbf{x}} \frac{1}{2}\|\mathbf{y - Ax}\|^2_\mathbf{W} = \frac{1}{2}\mathbf{\left(y - Ax\right)^\mathrm{T} W\left(y - Ax\right)}
@@ -112,7 +115,7 @@ Call:
 ```
 Eigen::VectorXf x = QPSolver<float>::least_squares(y,A,W);
 ```
-### Least Squares with Equality Constraints (Over-determined Systems)
+### Least Squares with Equality Constraints (Over-determined Systems):
 ```math
 \begin{align}
 \min_{\mathbf{x}} \frac{1}{2}\|\mathbf{x_\mathrm{d} - x}\|^2_\mathrm{W} = \frac{1}{2}\mathbf{\left(x_\mathrm{d} - x\right)^\mathrm{T} W\left(x_\mathrm{d} - x\right)} \\
@@ -132,14 +135,15 @@ In this situation the $\mathbf{x}$ vector has more dimensions than the $\mathbf{
 Eigen::VectorXd x = QPSolver<double>::redundant_least_squares(xd,W,A,y);
 ```
 
-### Optimisation with Inequality Constraints
+### Optimisation with Inequality Constraints:
 ```math
 \begin{align}
 	\min_{\mathbf{x}} \frac{1}{2}\mathbf{x^\mathrm{T}Hx + x^\mathrm{T}f} \\
 	\text{subject to: } \mathbf{Bx} \le \mathbf{z}
 \end{align}
 ```
-For problems like this with inequality constraints, the solver uses an interior point algorithm. This uses Newton's method to iteratively minimize the objective function whilst satisfying the inequality. It therefore requires a _start point_ or _initial guess_:
+>[!NOTE]
+> For problems like this with inequality constraints, the solver uses an interior point algorithm. This uses Newton's method to iteratively minimize the objective function whilst satisfying the inequality. It therefore requires a _start point_ or _initial guess_:
 
 First create an object, then call the function:
 ```
@@ -192,9 +196,10 @@ use:
 ```
 Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0);
 ```
-:warning: When using this particular function the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
+>[!WARNING]
+> When using this particular function the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
 
-:arrow_backward: [Go Back.](#simple-qp-solver)
+[:arrow_backward: Go Back.](#simple-qp-solver)
 
 ### Options for the Interior Point Algorithm
 
@@ -205,9 +210,9 @@ There are several parameters that can be set when solving for inequality constai
 - `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
 - `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
 
-:arrow_backward: [Go Back.](#simple-qp-solver)
+ [:arrow_backward: Go Back.](#simple-qp-solver)
 
-### Running the Test File
+### Running the Test File:
 
 First navigate to your working directory:
 ```
@@ -240,6 +245,7 @@ which prints information about the use of different class methods, as well as th
 :arrow_backward: [Go back.](#simple-qp-solver)
 
 ## Citing this Repository
+
 If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
 ```
 @software{Woolfrey_SimpleQPSolver_2023,
@@ -257,6 +263,6 @@ Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https:/
 ```
 Alternatively, click on `Cite this repository` on the top-right corner of this page.
 
-:arrow_backward: [Go Back.](#simple-qp-solver)
+[ :arrow_backward: Go Back.](#simple-qp-solver)
 
 

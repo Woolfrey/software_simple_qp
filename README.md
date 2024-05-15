@@ -16,7 +16,7 @@ where:
 There are also several functions for handling linear least squares problems with equality and inequality constraints. It is fast, and effective. It has been used to control the upper body of a humanoid robot subject to grasp constraints and joint limits.
 
 <p align="center">
-	<img src="https://github.com/Woolfrey/software_simple_qp/raw/master/assets/bimanual_manipulation.gif" width=200 height="auto"/>
+	<img src="https://github.com/Woolfrey/software_simple_qp/blob/master/assets/bimanual_manipulation.gif" width=200 height="auto"/>
 </p>
 
 >[!NOTE]

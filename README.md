@@ -96,7 +96,7 @@ Assuming $\mathbf{H}$ and $\mathbf{f}$ are given, then you can call:
 ```
 Eigen::VectorXd x = QPSolver<double>::solve(H,f);
 ```
->[!NOTE]
+>[!TIP]
 > You can actually solve this yourself by calling something like `x = H.ldlt().solve(-f)`, but I put this function in for completeness.
 
 ### Linear Least Squares (Linear Regression):
@@ -143,7 +143,7 @@ Eigen::VectorXd x = QPSolver<double>::redundant_least_squares(xd,W,A,y);
 \end{align}
 ```
 >[!NOTE]
-> For problems like this with inequality constraints, the solver uses an interior point algorithm. This uses Newton's method to iteratively minimize the objective function whilst satisfying the inequality. It therefore requires a _start point_ or _initial guess_:
+> For problems like this with inequality constraints, the solver uses an interior point algorithm. This uses Newton's method to iteratively minimize the objective function whilst satisfying the inequality. It therefore requires a _start point_ or _initial guess_.
 
 First create an object, then call the function:
 ```
@@ -242,7 +242,7 @@ which prints information about the use of different class methods, as well as th
 
 <img src="https://github.com/Woolfrey/software_simple_qp/assets/62581255/8ecb93a6-e45b-4ff9-aebf-1f2f27c62f25" width="600" height="auto">
 
-:arrow_backward: [Go back.](#simple-qp-solver)
+[:arrow_backward: Go back.](#simple-qp-solver)
 
 ## Citing this Repository
 
@@ -263,6 +263,6 @@ Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https:/
 ```
 Alternatively, click on `Cite this repository` on the top-right corner of this page.
 
-[ :arrow_backward: Go Back.](#simple-qp-solver)
+[:arrow_backward: Go Back.](#simple-qp-solver)
 
 

@@ -34,9 +34,8 @@ class QPSolver
 		 */
 		static Eigen::Vector<DataType,Eigen::Dynamic>
 		solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &H,
-                      const Eigen::Vector<DataType, Eigen::Dynamic> &f);
+                const Eigen::Vector<DataType, Eigen::Dynamic> &f);
 	
-		             
 		/**
 		 * Linear least squares of a problem y - A*x.
 		 * @param y The vector of outputs or observations
@@ -46,8 +45,8 @@ class QPSolver
 		 */             
 		static Eigen::Vector<DataType, Eigen::Dynamic>
 		least_squares(const Eigen::Vector<DataType, Eigen::Dynamic> &y,
-			      const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
-			      const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W);
+                        const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
+                        const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W);
 
 		/**
 		 * Solve a least squares problem where the decision variable has more elements than the output.
@@ -216,18 +215,18 @@ class QPSolver
 		
 	private:
 		
-		DataType tol = 1e-02;                                                               ///< Minimum value for the step size before terminating the interior point algorithm.
-		DataType stepSize;                                                                  ///< Step size on the final iteration of the interior point algorithm.
-		DataType barrierReductionRate = 1e-03;                                              ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
-		DataType initialBarrierScalar = 100;                                                ///< Starting value for the constraint barrier scalar in the interior point algorithm.
+		DataType tol = 1e-02;                                                                     ///< Minimum value for the step size before terminating the interior point algorithm.
+		DataType stepSize;                                                                        ///< Step size on the final iteration of the interior point algorithm.
+		DataType barrierReductionRate = 1e-03;                                                    ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
+		DataType initialBarrierScalar = 100;                                                      ///< Starting value for the constraint barrier scalar in the interior point algorithm.
 		
-		enum Method {dual, primal} method = primal;                                         ///< Used to select which method to solve for with redundant least squares problems.                                               
+		enum Method {dual, primal} method = primal;                                               ///< Used to select which method to solve for with redundant least squares problems.                                               
 		
-		unsigned int maxSteps = 20;                                                         ///< Maximum number of iterations to run interior point method before terminating.
+		unsigned int maxSteps = 20;                                                               ///< Maximum number of iterations to run interior point method before terminating.
 		
-		unsigned int numSteps = 0;                                                          ///< Records the number of steps it took to solve a problem with the interior point algorithm.
+		unsigned int numSteps = 0;                                                                ///< Records the number of steps it took to solve a problem with the interior point algorithm.
 		
-		Eigen::Vector<DataType, Eigen::Dynamic> lastSolution;                               ///< Final solution returned by interior point algorithm. Can be used as a starting point for future calls to the method.
+		Eigen::Vector<DataType, Eigen::Dynamic> lastSolution;                                     ///< Final solution returned by interior point algorithm. Can be used as a starting point for future calls to the method.
 		
 		/**
 		 * The std::min function doesn't like floats, so I had to write my own ಠ_ಠ
@@ -247,7 +246,7 @@ class QPSolver
 template <class DataType> inline
 Eigen::Vector<DataType,Eigen::Dynamic>
 QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &H,
-		          const Eigen::Vector<DataType, Eigen::Dynamic>          &f)
+                          const Eigen::Vector<DataType, Eigen::Dynamic> &f)
 {
 	if(H.rows() != H.cols())
 	{
@@ -274,7 +273,7 @@ QPSolver<DataType>::least_squares(const Eigen::Vector<DataType, Eigen::Dynamic> 
                                   const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
                                   const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W)
 {
-	if(A.rows() < A.cols())                                                                     // Redundant system, use other function
+	if(A.rows() < A.cols())                                                                        // Redundant system, use other function
 	{
 		throw std::invalid_argument("[ERROR] [QP SOLVER] least_squares(): "
 		                            "The A matrix has more rows than columns ("
@@ -295,7 +294,7 @@ QPSolver<DataType>::least_squares(const Eigen::Vector<DataType, Eigen::Dynamic> 
 		                            "the A matrix had " + std::to_string(A.rows()) + " rows, and "
 		                            "the weighting matrix W was " + std::to_string(W.rows()) + "x" + std::to_string(W.cols()) + ".");
 	}
-	else	return (A.transpose()*W*A).ldlt().solve(A.transpose()*W*y);                         // x = (A'*W*A)^-1*A'*W*y
+	else	return (A.transpose()*W*A).ldlt().solve(A.transpose()*W*y);                               // x = (A'*W*A)^-1*A'*W*y
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,10 +302,10 @@ QPSolver<DataType>::least_squares(const Eigen::Vector<DataType, Eigen::Dynamic> 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
 Eigen::Vector<DataType,Eigen::Dynamic>
-QPSolver<DataType>::redundant_least_squares(const Eigen::Vector<DataType, Eigen::Dynamic>          &xd,
+QPSolver<DataType>::redundant_least_squares(const Eigen::Vector<DataType, Eigen::Dynamic> &xd,
                                             const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W,
                                             const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
-                                            const Eigen::Vector<DataType, Eigen::Dynamic>          &y)
+                                            const Eigen::Vector<DataType, Eigen::Dynamic> &y)
 {
 	if(A.rows() >= A.cols())
 	{
@@ -332,15 +331,15 @@ QPSolver<DataType>::redundant_least_squares(const Eigen::Vector<DataType, Eigen:
         else if(y.size() != A.rows())
         {    	
         	throw std::invalid_argument("[ERROR] [QP SOLVER] redundant_least_squares(): "
-        	                       "Dimensions for the equality constraint do not match. "
-        	                       "The constraint vector had " + std::to_string(y.size()) + " elements, and "
-        	                       "the constraint matrix had " + std::to_string(A.rows()) + " rows.");
+                                      "Dimensions for the equality constraint do not match. "
+                                      "The constraint vector had " + std::to_string(y.size()) + " elements, and "
+                                      "the constraint matrix had " + std::to_string(A.rows()) + " rows.");
         }
         else
         {   
         	Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> invWA = W.ldlt().solve(A.transpose()); // Makes calcs a little easier
 
-		return xd + invWA*(A*invWA).ldlt().solve(y - A*xd);                                 // xd + W^-1*A'*(A*W^-1*A')^-1*(y-A*xd)
+		return xd + invWA*(A*invWA).ldlt().solve(y - A*xd);                                       // xd + W^-1*A'*(A*W^-1*A')^-1*(y-A*xd)
 	}
 }
 
@@ -368,8 +367,8 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 	else if(W.rows() != W.cols())
 	{
 		throw std::invalid_argument("[ERROR] [QP SOLVER] constrained_least_squares(): "
-		                       "Expected the weighting matrix W to be square, but it was "
-		                       + std::to_string(W.rows()) + "x" + std::to_string(W.cols()) + ".");
+                                      "Expected the weighting matrix W to be square, but it was "
+                                      + std::to_string(W.rows()) + "x" + std::to_string(W.cols()) + ".");
 	}
 	else if(A.cols() != xMin.size() or xMin.size() != xMax.size() or xMax.size() != x0.size())
 	{
@@ -396,9 +395,9 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 	z.head(n) =  xMax;
 	z.tail(n) = -xMin;
 	
-	Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> AtW = A.transpose()*W;                                     // Makes calcs a tiny bit faster
+	Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> AtW = A.transpose()*W;                   // Makes calcs a tiny bit faster
 
-	return solve(AtW*A, -AtW*y, B, z, x0);                                                      // Send to interior point algorithm and solve
+	return solve(AtW*A, -AtW*y, B, z, x0);                                                         // Send to interior point algorithm and solve
 }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,13 +405,13 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
 Eigen::Vector<DataType,Eigen::Dynamic>
-QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eigen::Dynamic>           &xd,
-                                              const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>  &W,
-                                              const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic>  &A,
-                                              const Eigen::Vector<DataType, Eigen::Dynamic>           &y,
-                                              const Eigen::Vector<DataType, Eigen::Dynamic>           &xMin,
-                                              const Eigen::Vector<DataType, Eigen::Dynamic>           &xMax,
-                                              const Eigen::Vector<DataType, Eigen::Dynamic>           &x0)
+QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eigen::Dynamic> &xd,
+                                              const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W,
+                                              const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
+                                              const Eigen::Vector<DataType, Eigen::Dynamic> &y,
+                                              const Eigen::Vector<DataType, Eigen::Dynamic> &xMin,
+                                              const Eigen::Vector<DataType, Eigen::Dynamic> &xMax,
+                                              const Eigen::Vector<DataType, Eigen::Dynamic> &x0)
 {
 	if(xMin.size() != xMax.size())
 	{
@@ -445,13 +444,13 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> inline
 Eigen::Vector<DataType,Eigen::Dynamic>
-QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eigen::Dynamic>          &xd,
+QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eigen::Dynamic> &xd,
                                               const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W,
                                               const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &A,
-                                              const Eigen::Vector<DataType, Eigen::Dynamic>          &y,
+                                              const Eigen::Vector<DataType, Eigen::Dynamic> &y,
                                               const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &B,
-                                              const Eigen::Vector<DataType, Eigen::Dynamic>          &z,
-                                              const Eigen::Vector<DataType, Eigen::Dynamic>          &x0)
+                                              const Eigen::Vector<DataType, Eigen::Dynamic> &z,
+                                              const Eigen::Vector<DataType, Eigen::Dynamic> &x0)
 {
 	// Ensure input arguments are sound
 	if(xd.size() != W.rows() or W.rows() != A.cols() or A.cols() != B.cols() or B.cols() != x0.size())
@@ -487,9 +486,9 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 	
 	if(this->method == primal)
 	{	
-		unsigned int c = B.rows();                                                          // Number of inequality constraints
-		unsigned int m = A.rows();                                                          // Number of equality constraints
-		unsigned int n = A.cols();                                                          // Decision variable
+		unsigned int c = B.rows();                                                                // Number of inequality constraints
+		unsigned int m = A.rows();                                                                // Number of equality constraints
+		unsigned int n = A.cols();                                                                // Decision variable
 		
 		// H = [  0  -A ]
 		//     [ -A'  W ]
@@ -508,7 +507,7 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 		// new_x0 = [ lambda ]
 		//          [   x0   ]
 		Eigen::Vector<DataType,Eigen::Dynamic> new_x0(m+n);
-		new_x0.head(m) = (A*W.ldlt().solve(A.transpose())).ldlt().solve(y - A*xd);          // Initial guess for Lagrange multipliers
+		new_x0.head(m) = (A*W.ldlt().solve(A.transpose())).ldlt().solve(y - A*xd);                // Initial guess for Lagrange multipliers
 		new_x0.tail(n) = x0;
 		
 		// newB = [ 0 B ]
@@ -516,9 +515,9 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 		newB.block(0,0,c,m).setZero();
 		newB.block(0,m,c,n) = B;
 		
-		this->lastSolution = solve(H,f,newB,z,new_x0).tail(n);                              // We don't need the Lagrange multipliers
+		this->lastSolution = solve(H,f,newB,z,new_x0).tail(n);                                    // We don't need the Lagrange multipliers
 		
-		return this->lastSolution;                                                          // Return decision variable x
+		return this->lastSolution;                                                                // Return decision variable x
 	}
 	else if(this->method == dual)
 	{
@@ -526,15 +525,15 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 		
 		// lambda = (A*W^-1*A')^-1*(y - A*xd)
 		
-		Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> invWAt = W.ldlt().solve(A.transpose());            // Makes calcs a little easier
+		Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> invWAt = W.ldlt().solve(A.transpose()); // Makes calcs a little easier
 		
-		Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> H = A*invWAt;                                      // Hessian matrix for dual problem
+		Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> H = A*invWAt;                       // Hessian matrix for dual problem
 		
 		Eigen::LDLT<Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic>> Hdecomp(H);                                  // Saves a bit of time
 		
-		Eigen::Vector<DataType,Eigen::Dynamic> xr = invWAt*(H,-y,B*invWAt,z,Hdecomp.solve(y));            // Solve the range space
+		Eigen::Vector<DataType,Eigen::Dynamic> xr = invWAt*(H,-y,B*invWAt,z,Hdecomp.solve(y));    // Solve the range space
 		
-		Eigen::Vector<DataType,Eigen::Dynamic> xn = xd - invWAt*Hdecomp.solve(A*xd);                      // Compute null space component
+		Eigen::Vector<DataType,Eigen::Dynamic> xn = xd - invWAt*Hdecomp.solve(A*xd);              // Compute null space component
 		
 		DataType alpha = 1.0;
 		for(int i = 0; i < z.size(); i++)
@@ -566,10 +565,10 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
 template <class DataType> inline
 Eigen::Vector<DataType,Eigen::Dynamic>
 QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &H,
-                          const Eigen::Vector<DataType,Eigen::Dynamic>           &f,
+                          const Eigen::Vector<DataType,Eigen::Dynamic> &f,
                           const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &B,
-                          const Eigen::Vector<DataType,Eigen::Dynamic>           &z,
-                          const Eigen::Vector<DataType,Eigen::Dynamic>           &x0)
+                          const Eigen::Vector<DataType,Eigen::Dynamic> &z,
+                          const Eigen::Vector<DataType,Eigen::Dynamic> &x0)
 {
 	// Ensure arguments are sound
 	if(H.rows() != H.cols())
@@ -600,87 +599,89 @@ QPSolver<DataType>::solve(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::D
 	// I = H + sum (1/d_i^2)*b_i*b_i'
 	
 	// Variables used in this scope
-	DataType u = this->initialBarrierScalar;                                                    // As it says
-	unsigned int dim = x0.size();                                                               // Dimensions of the decision varialbe
-	unsigned int numConstraints = z.size();                                                     // As it says
-	Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> I(dim,dim);                           // Hessian matrix
-	Eigen::Vector<DataType,Eigen::Dynamic> g(dim);                                              // Gradient vector
-	std::vector<DataType> d(numConstraints);                                                    // Distance to every constraint
-	std::vector<Eigen::Vector<DataType,Eigen::Dynamic>> b(numConstraints);                      // Row vectors of constraint matrix (transposed)
-	std::vector<Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic>> bbt(numConstraints);     // Outer product of row vectors
-	Eigen::Vector<DataType,Eigen::Dynamic> x(dim);                                              // We want to solve for this
+	DataType u = this->initialBarrierScalar;                                                       // As it says
+	unsigned int dim = x0.size();                                                                  // Dimensions of the decision varialbe
+	unsigned int numConstraints = z.size();                                                        // As it says
+	Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> I(dim,dim);                              // Hessian matrix
+	Eigen::Vector<DataType,Eigen::Dynamic> g(dim);                                                 // Gradient vector
+	std::vector<DataType> d(numConstraints);                                                       // Distance to every constraint
+	std::vector<Eigen::Vector<DataType,Eigen::Dynamic>> b(numConstraints);                         // Row vectors of constraint matrix (transposed)
+	std::vector<Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic>> bbt(numConstraints);        // Outer product of row vectors
+	Eigen::Vector<DataType,Eigen::Dynamic> x(dim);                                                 // We want to solve for this
 	
 	// Do some pre-processing
 	bool initialConstraintViolated = false;
 	for(int j = 0; j < numConstraints; j++)
 	{
-		b[j]   = B.row(j).transpose();                                                      // Transpose the row vector
-		bbt[j] = b[j]*b[j].transpose();                                                     // Compute the outer product
+		b[j]   = B.row(j).transpose();                                                            // Transpose the row vector
+		bbt[j] = b[j]*b[j].transpose();                                                           // Compute the outer product
 
-		d[j] = z(j) - b[j].dot(x0);                                                         // Distance to constraint
+		d[j] = z(j) - b[j].dot(x0);                                                               // Distance to constraint
 		
-		if(d[j] <= 0) initialConstraintViolated = true;                                     // Flag
+		if(d[j] <= 0) initialConstraintViolated = true;                                           // Flag
 	}
 	
 	// Set the start point
 	if(initialConstraintViolated)
 	{
-		Eigen::Vector<DataType,Eigen::Dynamic> dz = 1e-03*Eigen::Vector<DataType,Eigen::Dynamic>::Ones(numConstraints);       // Add a tiny offset so we're not exactly on the constraint      
+		Eigen::Vector<DataType,Eigen::Dynamic> dz
+		= 1e-03*Eigen::Vector<DataType,Eigen::Dynamic>::Ones(numConstraints);                     // Add a tiny offset so we're not exactly on the constraint      
 		
 		     if(numConstraints > dim) x = (B.transpose()*B).ldlt().solve(B.transpose()*(z - dz)); // Underdetermined system
 		else if(numConstraints < dim) x =  B.transpose()*(B*B.transpose()).ldlt().solve(z - dz);  // Overdetermined system
-		else			      x =  B.partialPivLu().solve(z - dz);                        // Exact solution
+		else                          x =  B.partialPivLu().solve(z - dz);                        // Exact solution
 	}
 	else	x = x0;                                                                                   // Given start point
 	
 	// Run the interior point algorithm
 	for(int i = 0; i < this->maxSteps; i++)
 	{
-		this->numSteps = i+1;                                                               // Increment the counter
+		this->numSteps = i+1;                                                                     // Increment the counter
 		
 		// (Re)set values for new loop
-		g = H*x + f;                                                                        // Gradient vector
-		I = H;                                                                              // Hessian matrix
+		g = H*x + f;                                                                              // Gradient vector
+		I = H;                                                                                    // Hessian matrix
 		
 		// Compute distance to every constraint
 		for(int j = 0; j < numConstraints; j++)
 		{
-			d[j] = z(j) - b[j].dot(x);                                                  // Distance to constraint
+			d[j] = z(j) - b[j].dot(x);                                                           // Distance to constraint
 			
 			if(i == 0 and d[j] <= 0)
 			{
-				throw std::runtime_error("[ERROR] [QP SOLVER] solve(): Unable to find a solution that satisfies constraints.");
+				throw std::runtime_error("[ERROR] [QP SOLVER] solve(): "
+				                         "Unable to find a solution that satisfies constraints.");
 			}
 			
-			if(d[j] <= 0) d[j] = 1e-03;                                                 // Constraint violated; set a small, but non-zero distance
+			if(d[j] <= 0) d[j] = 1e-03;                                                          // Constraint violated; set a small, but non-zero distance
 		 
-			g += (u/d[j])*b[j];                                                         // Add up gradient
-			I += (u/(d[j]*d[j]))*bbt[j];                                                // Add up Hessian
+			g += (u/d[j])*b[j];                                                                  // Add up gradient
+			I += (u/(d[j]*d[j]))*bbt[j];                                                         // Add up Hessian
 		}
 
-		Eigen::Vector<DataType,Eigen::Dynamic> dx = I.ldlt().solve(-g);                                   // Compute Newton step
+		Eigen::Vector<DataType,Eigen::Dynamic> dx = I.ldlt().solve(-g);                           // Compute Newton step
 		
 		// Compute scalar for step size so that constraint is not violated on next step
 		DataType alpha = 1.0;
 		for(int j = 0; j < numConstraints; j++)
 		{
-			DataType dotProd = b[j].dot(dx);                                            // Makes calcs a little easier
+			DataType dotProd = b[j].dot(dx);                                                     // Makes calcs a little easier
 			
-			if(d[j] - dotProd <= 0) alpha = min(alpha,0.9*d[j]/dotProd);                // Shrink scalar if constraint violated
+			if(d[j] - dotProd <= 0) alpha = min(alpha,0.9*d[j]/dotProd);                         // Shrink scalar if constraint violated
 		}
 		
-		dx *= alpha;                                                                        // Scale the step
+		dx *= alpha;                                                                              // Scale the step
 		
-		this->stepSize = dx.norm();                                                         // Magnitude of the step size
+		this->stepSize = dx.norm();                                                               // Magnitude of the step size
 		
-		if(this->stepSize <= this->tol) break;                                              // If smaller than tolerance, break
+		if(this->stepSize <= this->tol) break;                                                    // If smaller than tolerance, break
 		
 		// Increment values for next loop
-		x += dx;                                                                            // Increment state
-		u *= this->barrierReductionRate;                                                    // Reduce barrier
+		x += dx;                                                                                  // Increment state
+		u *= this->barrierReductionRate;                                                          // Reduce barrier
 	}
 	
-	this->lastSolution = x;                                                                     // Save the value
+	this->lastSolution = x;                                                                        // Save the value
 	
 	return x;
 }

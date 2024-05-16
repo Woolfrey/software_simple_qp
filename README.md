@@ -220,11 +220,11 @@ cd ~/MyWorkspace
 ```
 Then clone the repository:
 ```
-git clone https://github.com/Woolfrey/SimpleQPSolver.git
+git clone https://github.com/Woolfrey/software_simple_qp.git
 ```
 Create a build folder and navigate to it:
 ```
-cd SimpleQPSolver/ && mkdir build && cd build
+cd software_simple_qp/ && mkdir build && cd build
 ```
 Generate the build tools using:
 ```

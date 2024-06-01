@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 	xMin = -5*Eigen::VectorXf::Ones(n);
 	xMax =  5*Eigen::VectorXf::Ones(n); xMax(1) = 2.7; xMax(3) = 3.6;                           // Manually override the limits
 	          
-	std::cout << "\nOften there are constrained on the solution. A generic form of this problem is:\n"
+	std::cout << "\nOften there are constraints on the solution. A generic form of this problem is:\n"
 	          << "\n     min 0.5*x'*H*x + x'*f\n"
 	          <<   "     subject to: B*x <= z\n"
 	          << "\nwhere:\n"
@@ -205,7 +205,8 @@ int main(int argc, char *argv[])
 	{
 		if(x(i) <= xMin(i) or x(i) >= xMax(i))
 		{
-			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
+			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!"
+			          << "  How did that happen? (ー_ーゞ\n";
 			break;
 		}
 	}
@@ -223,8 +224,8 @@ int main(int argc, char *argv[])
 	m = 12;
 	n = 17;
 	
-	xMin = -5*Eigen::VectorXf::Ones(n);
-	xMax =  5*Eigen::VectorXf::Ones(n);
+	xMin = -3*Eigen::VectorXf::Ones(n);
+	xMax =  3*Eigen::VectorXf::Ones(n);
 	
 	A = Eigen::MatrixXf::Random(m,n);
 	Eigen::VectorXf xTrue = Eigen::VectorXf::Random(n);

@@ -21,13 +21,14 @@ template <class DataType = float>
 class QPSolver
 {
      public:
+     
           /**
-           * Constructor.
+           * @brief Empty constructor.
            */
           QPSolver() {}
                
           /**
-           * Minimize 0.5*x'*H*x + x'*f, where x is the decision variable.
+           * @brief Minimize 0.5*x'*H*x + x'*f, where x is the decision variable.
            * @param H The Hessian matrix. It is assumed to be positive semi-definite.
            * @param f A vector.
            * @return The optimal solution for x.
@@ -37,7 +38,7 @@ class QPSolver
                 const Eigen::Vector<DataType, Eigen::Dynamic> &f);
      
           /**
-           * Linear least squares of a problem y - A*x.
+           * @brief Linear least squares of a problem y - A*x.
            * @param y The vector of outputs or observations
            * @param A The matrix defining the linear relationship between y and x
            * @param W A positive-definite weighting on the y values.
@@ -49,8 +50,8 @@ class QPSolver
                         const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &W);
 
           /**
-           * Solve a least squares problem where the decision variable has more elements than the output.
-           * The problem is of the form: min 0.5*(xd - x)'*W*(xd - x) subject to: A*x = y
+           * @brief Solve a least squares problem where the decision variable has more elements than the output.
+           *        The problem is of the form: min 0.5*(xd - x)'*W*(xd - x) subject to: A*x = y
            * @param xd A desired value for the solution.
            * @param W A weighting on the desired values / solution
            * @param A The matrix for the linear equality constraint
@@ -64,11 +65,11 @@ class QPSolver
                                   const Eigen::Vector<DataType, Eigen::Dynamic> &y);
                                                                    
           /**
-           * Solve linear least squares with upper and lower bounds on the solution.
-           * The problem is of the form:
-           * min 0.5*(y - A*x)'*W*(y - A*x)
-           * subject to: xMin <= x <= x
-           * This method uses an interior point algorithm to satisfy inequality constraints and thus requires a start point as an argument.
+           * @brief Solve linear least squares with upper and lower bounds on the solution.
+           * @details The problem is of the form:
+           *          min 0.5*(y - A*x)'*W*(y - A*x)
+           *          subject to: xMin <= x <= x
+           *          This method uses an interior point algorithm to satisfy inequality constraints and thus requires a start point as an argument.
            * @param y The vector component of the linear equation.
            * @param A The matrix that maps x to y.
            * @param xMin The lower bound on the decision variable
@@ -85,12 +86,12 @@ class QPSolver
                                     const Eigen::Vector<DataType, Eigen::Dynamic> &x0);
                        
           /**
-           * Solve a redundant least squares problem with upper and lower bounds on the solution.
-           * The problem is of the form:
-           * min 0.5*(xd - x)'*W*(xd - x)
-           * subject to: A*x = y
-           *           xMin <= x <= xMax
-           * It uses an interior point algorithm and thus requires a start point as an argument.
+           * @brief Solve a redundant least squares problem with upper and lower bounds on the solution.
+           * @details The problem is of the form:
+           *          min 0.5*(xd - x)'*W*(xd - x)
+           *          subject to: A*x = y
+           *                  xMin <= x <= xMax
+           *          It uses an interior point algorithm and thus requires a start point as an argument.
            * @param xd Desired value for the solution.
            * @param W Weighting on the desired value / solution.
            * @param A Linear equality constraint matrix.
@@ -109,12 +110,12 @@ class QPSolver
                                     const Eigen::Vector<DataType, Eigen::Dynamic> &x0);
           
           /**
-           * Solve a redundant least squares problem with inequality constraints on the solution.
-           * The problem is of the form:
-           * min 0.5*(xd - x)'*W*(xd - x)
-           * subject to: A*x = y
-           *             B*x < z
-           * It uses an interior point algorithm and thus requires a start point as an argument.
+           * @brief Solve a redundant least squares problem with inequality constraints on the solution.
+           * @details The problem is of the form:
+           *          min 0.5*(xd - x)'*W*(xd - x)
+           *          subject to: A*x = y
+           *                     B*x < z
+           *          It uses an interior point algorithm and thus requires a start point as an argument.
            * @param xd Desired value for the solution.
            * @param W Weighting on the desired value / solution.
            * @param A Equality constraint matrix.
@@ -133,11 +134,11 @@ class QPSolver
                                     const Eigen::Vector<DataType, Eigen::Dynamic> &x0);
           
           /**
-           * Solve a generic quadratic programming problem with inequality constraints.
-           * The problem is of the form:
-           * min 0.5*x'*H*x + x'*f
-           * subject to: B*x < z
-           * This method uses an interior point algorithm and thus requires a start point as an argument.
+           * @biref Solve a generic quadratic programming problem with inequality constraints.
+           * @details The problem is of the form:
+           *          min 0.5*x'*H*x + x'*f
+           *          subject to: B*x < z
+           *          This method uses an interior point algorithm and thus requires a start point as an argument.
            * @param H A positive semi-definite matrix such that H = H'.
            * @param f A vector for the linear component of the problem.
            * @param B Inequality constraint matrix.
@@ -153,72 +154,75 @@ class QPSolver
                 const Eigen::Vector<DataType, Eigen::Dynamic> &x0);
           
           /**
-           * Set the tolerance for the step size in the interior point aglorithm.
-           * The algorithm terminates if alpha*dx < tolerance, where dx is the step and alpha is a scalar.
+           * @brief Set the tolerance for the step size in the interior point aglorithm.
+           * @details The algorithm terminates if alpha*dx < tolerance, where dx is the step and alpha is a scalar.
            * @param tolerance As it says.
            * @return Returns false if the input argument is invalid.
            */
           bool set_tolerance(const DataType &tolerance);
           
           /**
-           * Set the maximum number of steps in the interior point algorithm before terminating.
+           * @brief Set the maximum number of steps in the interior point algorithm before terminating.
            * @param number As it says.
            * @return Returns false if the input argument is invalid.
            */
           bool set_max_steps(const unsigned int &number);
           
           /**
-           * Set the scalar for the constraint barriers in the interior point aglorithm.
-           * Inequality constraints are converted to a log barrier function. The scalar determines how steep the initial barriers are.
+           * @brief Set the scalar for the constraint barriers in the interior point aglorithm.
+           * @details Inequality constraints are converted to a log barrier function. The scalar determines how steep the initial barriers are.
            * @param scalar The initial scalar value when starting the interior point algorithm.
            * @return Returns false if the argument was invalid.
            */
           bool set_barrier_scalar(const DataType &scalar);
           
           /**
-           * Set the rate at which the constraint barriers are reduced in the interior point aglorithm.
-           * The barrier is reduced at a given rate / scale every step in the algorithm to safely approach constraints.
+           * @brief Set the rate at which the constraint barriers are reduced in the interior point aglorithm.
+           * @details The barrier is reduced at a given rate / scale every step in the algorithm to safely approach constraints.
            * @param rate A scalar < 1 which the barrier scalar is reduced by every step.
            * @return Returns false if the argument is invalid.
            */
           bool set_barrier_reduction_rate(const DataType &rate);
           
           /**
-           * @return Returns the step size alpha*||dx|| for the final iteration in the interior point algorithm.
+           * @brief Returns the step size alpha*||dx|| for the final iteration in the interior point algorithm.
            */
           DataType step_size() const { return this->stepSize; }
           
           /**
-           * @return Returns the number of iterations it took to solve the interior point algorithm.
+           * @brief Returns the number of iterations it took to solve the interior point algorithm.
            */
           unsigned int num_steps() const { return this->numSteps; }
           
           /**
-           * @return Returns the last solution from when the interior point algorithm was previously called.
+           * @brief Returns the last solution from when the interior point algorithm was previously called.
            */
           Eigen::Vector<DataType, Eigen::Dynamic> last_solution() const { return this->lastSolution; }
           
           /**
-           * Clears the last solution such that last_solution().size() == 0.
+           * @brief Clears the last solution such that last_solution().size() == 0.
            */
           void clear_last_solution() { this->lastSolution.resize(0); }
           
           /**
-           * The interior point algorithm will use the dual method to solve a redundant QP problem.
+           * @brief The interior point algorithm will use the dual method to solve a redundant QP problem.
            */
           void use_dual();
           
           /**
-           * The interior point algorithm will use the primal method to solve a redundant QP problem.
+           * @brief The interior point algorithm will use the primal method to solve a redundant QP problem.
            */
           void use_primal();
           
      private:
           
           DataType tol = 1e-02;                                                                     ///< Minimum value for the step size before terminating the interior point algorithm.
+         
           DataType stepSize;                                                                        ///< Step size on the final iteration of the interior point algorithm.
+         
           DataType barrierReductionRate = 1e-02;                                                    ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
-          DataType initialBarrierScalar = 100;                                                     ///< Starting value for the constraint barrier scalar in the interior point algorithm.
+         
+          DataType initialBarrierScalar = 100;                                                      ///< Starting value for the constraint barrier scalar in the interior point algorithm.
           
           enum Method {dual, primal} method = primal;                                               ///< Used to select which method to solve for with redundant least squares problems.                                               
           
@@ -229,7 +233,7 @@ class QPSolver
           Eigen::Vector<DataType, Eigen::Dynamic> lastSolution;                                     ///< Final solution returned by interior point algorithm. Can be used as a starting point for future calls to the method.
           
           /**
-           * The std::min function doesn't like floats, so I had to write my own ಠ_ಠ
+           * @brief The std::min function doesn't like floats, so I had to write my own ಠ_ಠ
            * @return Returns the minimum between to values 'a' and 'b'.
            */
           DataType min(const DataType &a, const DataType &b)

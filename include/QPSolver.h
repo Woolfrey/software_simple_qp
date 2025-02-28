@@ -17,15 +17,43 @@
 #include <iostream>                                                                                 // cerr, cout
 #include <vector>                                                                                   // vector
 
+/**
+ * @brief A data structure for passing options to the QP solver in a single argument.
+ */
+ template <typename DataType = float>
+ struct SolverOptions
+ {
+    DataType barrierReductionRate = 1e-02;                                                          ///< Multiplier on the barrier size each step
+    DataType initialBarrierScalar = 100;                                                            ///< For the log barrier function
+    DataType tolerance = 5e-03;                                                                     ///< Terminates solver when step size is below this value.
+    unsigned int maxSteps = 20;                                                                     ///< Maximum number of iterations before terminating the algorithm
+ };
+
+/**
+ * @brief A class for solving convex optimisation problems.
+ */
 template <class DataType = float>
 class QPSolver
 {
      public:
      
           /**
+<<<<<<< HEAD
            * @brief Empty constructor.
            */
           QPSolver() {}
+=======
+           * @brief Constructor.
+           * @param options Parameters for the interior point algorithm.
+           */
+          QPSolver(const SolverOptions<DataType> &options = SolverOptions<DataType>())
+          {
+            barrierReductionRate = options.barrierReductionRate;
+            initialBarrierScalar = options.initialBarrierScalar;
+            tol = options.tolerance;
+            maxSteps = options.maxSteps;
+          }
+>>>>>>> devel
                
           /**
            * @brief Minimize 0.5*x'*H*x + x'*f, where x is the decision variable.
@@ -215,6 +243,7 @@ class QPSolver
           void use_primal();
           
      private:
+<<<<<<< HEAD
           
           DataType tol = 1e-02;                                                                     ///< Minimum value for the step size before terminating the interior point algorithm.
          
@@ -224,6 +253,17 @@ class QPSolver
          
           DataType initialBarrierScalar = 100;                                                      ///< Starting value for the constraint barrier scalar in the interior point algorithm.
           
+=======
+
+          DataType barrierReductionRate = 1e-02;                                                    ///< Constraint barrier scalar is multiplied by this value every step in the interior point algorithm.
+
+          DataType initialBarrierScalar = 100;                                                      ///< Starting value for the constraint barrier scalar in the interior point algorithm.
+                    
+          DataType tol = 1e-02;                                                                     ///< Minimum value for the step size before terminating the interior point algorithm.
+         
+          DataType stepSize;                                                                        ///< Step size on the final iteration of the interior point algorithm.
+                 
+>>>>>>> devel
           enum Method {dual, primal} method = primal;                                               ///< Used to select which method to solve for with redundant least squares problems.                                               
           
           unsigned int maxSteps = 20;                                                               ///< Maximum number of iterations to run interior point method before terminating.

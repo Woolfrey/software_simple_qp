@@ -18,13 +18,22 @@
 int main(int argc, char *argv[])
 {
 	// Variables used in this scope
-	float t;
-	clock_t timer;
-	unsigned int m, n;                                                                          // Dimensions for the various problems.
-	Eigen::MatrixXf H, A, comparison;                                                                      
-	Eigen::VectorXf f, x, xMin, xMax, y;                                                                       
-	QPSolver<float> solver;                                                                     // Create an instance of the class
-	srand((unsigned int) time(NULL));                                                           // Seed the random number generator
+	float t;                                                                                        // Record the time it took to solve
+	clock_t timer;                                                                                  // Clock object for timing the solver
+	unsigned int m, n;                                                                              // Dimensions for the various problems.
+	Eigen::MatrixXf H, A, comparison;                                                               // Matrices used in various problems
+	Eigen::VectorXf f, x, xMin, xMax, y;                                                            // Vectors used in various problems                                                                       
+	
+	// Options for the interior point algorithm
+	SolverOptions<float> options;
+	options.maxSteps             = 100;
+	options.stepSizeTolerance    = 0.9;
+	options.initialBarrierScalar = 500;
+	options.barrierReductionRate = 0.005;
+	
+	QPSolver<float> solver(options);                                                                // Create an instance of the class
+	
+	srand((unsigned int) time(NULL));                                                               // Seed the random number generator
 	
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                        A GENERIC QP PROBLEM                        *\n"
@@ -249,8 +258,6 @@ int main(int argc, char *argv[])
 	std::cout << "\nHere is the solution for a " << m << "x" << n << " system using the primal method:\n";
 	
 	timer = clock();
-
-	solver.set_tolerance(2.0);
 	
 	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
 
@@ -267,7 +274,7 @@ int main(int argc, char *argv[])
 	{
 		if(x(i) <= xMin(i) or x(i) >= xMax(i))
 		{
-			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!\n";
+			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED! (How did that happen?)\n";
 			break;
 		}
 	}
@@ -275,9 +282,9 @@ int main(int argc, char *argv[])
 	float error1 = (y - A*x).norm();
 	
 	std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
-		  <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
+		      <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
 		  
-	std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n";
+	std::cout << "\nIt took " << solver.results().numberOfSteps << " steps to solve.\n";
 	
 	std::cout << "\nThe objective function error is: "
 	          << (A.transpose()*(A*A.transpose()).ldlt().solve(A*x)).norm() << ".\n\n";
@@ -285,8 +292,6 @@ int main(int argc, char *argv[])
 	try
 	{
 		solver.use_dual();
-		
-		solver.set_tolerance(2.0);
 		
 		timer = clock();
 		x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
@@ -303,7 +308,7 @@ int main(int argc, char *argv[])
 		std::cout << "\nThe error ||y - A*x|| is: " << error2/y.norm() << ", "
 			  <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
 			  
-		std::cout << "\nIt took " << solver.num_steps() << " steps to solve.\n";
+		std::cout << "\nIt took " << solver.results().numberOfSteps << " steps to solve.\n";
 		
 		std::cout << "\nThe objective function error is: "
 	       		  << (A.transpose()*(A*A.transpose()).ldlt().solve(A*x)).norm() << ".\n";

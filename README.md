@@ -279,3 +279,9 @@ Woolfrey, J. (2023). Simple QP Solver (Version 1.0.0) [Computer software]. https
 ```
 
 [:top: Back to top.](#cyclone-simple-qp-solver)
+
+## :scroll: License
+
+This software package is licensed under the [GNU General Public License v3.0 (GPL-3.0)](https://choosealicense.com/licenses/gpl-3.0/). You are free to use, modify, and distribute this package, provided that any modified versions also comply with the GPL-3.0 license. All modified versions must make the source code available and be licensed under GPL-3.0. The license also ensures that the software remains free and prohibits the use of proprietary restrictions such as Digital Rights Management (DRM) and patent claims. For more details, please refer to the [full license text](LICENSE).
+
+[:top: Back to top.](#cyclone-simple-qp-solver)

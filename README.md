@@ -34,7 +34,9 @@ There are also several functions for handling linear least squares problems with
    	 - [Optimisation with Inequality Constraints](#optimisation-with-inequality-constraints)
    	- [Options for the Interior Point Algorithm](#options-for-the-interior-point-algorithm)
    	- [Running the Test File](#running-the-test-file)
+- [Contributing](#handshake-contributing)
 - [Citing this Repository](#bookmark_tabs-citing-this-repository)
+- [License](#scroll-license)
 
 ## :floppy_disk: Installation Instructions
 
@@ -248,11 +250,22 @@ which prints information about the use of different class methods, as well as th
 
 [:top: Back to top.](#cyclone-simple-qp-solver)
 
+## :handshake: Contributing
+
+Contributions to this project are always welcome! Feel free to:
+1. Fork the repository,
+2. Implement your changes, then
+3. Submit a pull request.
+
+If you're looking for ideas, you can always check the [Issues tab](https://github.com/Woolfrey/software_simple_qp/issues) for those with :raising_hand: [OPEN]. These are things I'd like to implement myself, but don't have time. It'd be much appreciated, and you'll be listed as a contributor!
+
 ## :bookmark_tabs: Citing this Repository
 
-If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
+If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Click on `Cite this repository` under the **About** section at the top-right corner of this page :arrow_upper_right:
+
+Here is the `BibTeX` reference:
 ```
-@software{Woolfrey_SimpleQPSolver_2023,
+@software{woolfrey_simple_qp_2023,
      author  = {Woolfrey, Jon},
      month   = aug,
      title   = {{S}imple {QP} {S}olver},
@@ -263,10 +276,13 @@ If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could c
 ```
 Here's the automatically generated APA format:
 ```
-Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/software_simple_qp
+Woolfrey, J. (2023). Simple QP Solver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/software_simple_qp
 ```
-Alternatively, click on `Cite this repository` on the top-right corner of this page.
 
 [:top: Back to top.](#cyclone-simple-qp-solver)
 
+## :scroll: License
 
+This software package is licensed under the [GNU General Public License v3.0 (GPL-3.0)](https://choosealicense.com/licenses/gpl-3.0/). You are free to use, modify, and distribute this package, provided that any modified versions also comply with the GPL-3.0 license. All modified versions must make the source code available and be licensed under GPL-3.0. The license also ensures that the software remains free and prohibits the use of proprietary restrictions such as Digital Rights Management (DRM) and patent claims. For more details, please refer to the [full license text](LICENSE).
+
+[:top: Back to top.](#cyclone-simple-qp-solver)

@@ -36,6 +36,7 @@ There are also several functions for handling linear least squares problems with
    	- [Running the Test File](#running-the-test-file)
 - [Contributing](#handshake-contributing)
 - [Citing this Repository](#bookmark_tabs-citing-this-repository)
+- [License](#scroll-license)
 
 ## :floppy_disk: Installation Instructions
 
@@ -264,7 +265,7 @@ If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could c
 
 Here is the `BibTeX` reference:
 ```
-@software{Woolfrey_SimpleQPSolver_2023,
+@software{woolfrey_simple_qp_2023,
      author  = {Woolfrey, Jon},
      month   = aug,
      title   = {{S}imple {QP} {S}olver},

@@ -1,4 +1,4 @@
-# Simple QP Solver
+# :cyclone: Simple QP Solver
 A small, efficient class for solving convex optimisation problems. A generic quadratic programming (QP) problem is of the form:
 ```math
 \begin{align}
@@ -22,26 +22,29 @@ There are also several functions for handling linear least squares problems with
 >[!NOTE]
 > Simple QP Solver is **free to use** under the GNU General Public License v3.0. If you find this software useful, [citing it](#citing-this-repository) would be appreciated.
 
-
-**Jump To:**
-- [Installation Instructions](#installation-instructions)
+#### :compass: Navigation
+- [Installation Instructions](#floppy_disk-installation-instructions)
 	- [Installing Eigen](#installing-eigen)
  	- [Installing SimpleQPSolver](#installing-simpleqpsolver)
 	- [Automatic Download in Another Package](#automatic-download-in-another-package)
-- [Using the QP Solver](#using-the-qp-solver)
+- [Using the QP Solver](#wrench-using-the-qp-solver)
   	- [A Generic QP Problem](#a-generic-qp-problem)
    	- [Linear Least Squares](#linear-least-squares-linear-regression)
    	- [Least Squares with Equality Constraints](#least-squares-with-equality-constraints-over-determined-systems)
    	 - [Optimisation with Inequality Constraints](#optimisation-with-inequality-constraints)
    	- [Options for the Interior Point Algorithm](#options-for-the-interior-point-algorithm)
    	- [Running the Test File](#running-the-test-file)
-- [Citing this Repository](#citing-this-repository)
+- [Contributing](#handshake-contributing)
+- [Citing this Repository](#bookmark_tabs-citing-this-repository)
 
-## Installation Instructions
+## :floppy_disk: Installation Instructions
 
 ### Installing Eigen:
 
-The `SimpleQPSolver` requires the `Eigen` libraries. If you're using Linux you can install it from the command line:
+> [!NOTE]
+> If you're using Ubuntu 20.04, you must install Eigen 3.4 manually. Later versions (22.04 +) will automatically install 3.4 using the `apt install` command.
+
+The `SimpleQPSolver` requires the `Eigen` v3.4 libraries. If you're using Linux you can install it from the command line:
 
 ```
 sudo apt install libeigen3-dev
@@ -70,9 +73,9 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/your_package/include/QPSolver.h")
 	     ${CMAKE_SOURCE_DIR}/your_package/include/QPSolver.h)
 endif()
 ```
-[:arrow_backward: Go Back.](#simple-qp-solver)
+[:top: Back to top.](#cyclone-simple-qp-solver)
 
-## Using the QP Solver
+## :wrench: Using the QP Solver
 
 You can use `float` or `double` with this class. Input arguments for the `Eigen` classes must match:
 - `Eigen::MatrixXf` and `Eigen::VectorXf` when using `QPSolver<float>`, or
@@ -158,7 +161,7 @@ Eigen::VectorXd x0 = solver.last_solution();
 ```
 There are several functions conveniently written for least squares type problems:
 
-**Linear least squares with upper and lower bounds:**
+#### Linear least squares with upper and lower bounds:
 
 ```math
 \begin{align}
@@ -170,7 +173,8 @@ use:
 ```
 Eigen::VectorXf x = solver.constrained_least_squares(y,A,W,xMin,xMax,x0);
 ```
-**Redundant least squares with upper and lower bounds:**
+
+#### Redundant least squares with upper and lower bounds:
 
 ```math
 \begin{align}
@@ -183,7 +187,8 @@ use:
 ```
 Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0);
 ```
-**Redundant least squares with inequality constraints:**
+
+#### Redundant least squares with inequality constraints:
 
 ```math
 \begin{align}
@@ -199,7 +204,7 @@ Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0);
 >[!WARNING]
 > When using this particular function the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
 
-[:arrow_backward: Go Back.](#simple-qp-solver)
+[:top: Back to top.](#cyclone-simple-qp-solver)
 
 ### Options for the Interior Point Algorithm
 
@@ -210,7 +215,7 @@ There are several parameters that can be set when solving for inequality constai
 - `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
 - `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
 
- [:arrow_backward: Go Back.](#simple-qp-solver)
+ [:top: Back to top.](#cyclone-simple-qp-solver)
 
 ### Running the Test File:
 
@@ -242,9 +247,18 @@ which prints information about the use of different class methods, as well as th
 
 <img src="https://github.com/Woolfrey/software_simple_qp/assets/62581255/8ecb93a6-e45b-4ff9-aebf-1f2f27c62f25" width="600" height="auto">
 
-[:arrow_backward: Go back.](#simple-qp-solver)
+[:top: Back to top.](#cyclone-simple-qp-solver)
 
-## Citing this Repository
+## :handshake: Contributing
+
+Contributions to this project are always welcome! Feel free to:
+1. Fork the repository,
+2. Implement your changes, then
+3. Submit a pull request.
+
+If you're looking for ideas, you can always check the [Issues tab](https://github.com/Woolfrey/software_simple_qp/issues) for those with :raising_hand: [OPEN]. These are things I'd like to implement myself, but don't have time. It'd be much appreciated, and you'll be listed as a contributor!
+
+## :bookmark_tabs: Citing this Repository
 
 If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
 ```
@@ -263,6 +277,4 @@ Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https:/
 ```
 Alternatively, click on `Cite this repository` on the top-right corner of this page.
 
-[:arrow_backward: Go Back.](#simple-qp-solver)
-
-
+[:top: Back to top.](#cyclone-simple-qp-solver)

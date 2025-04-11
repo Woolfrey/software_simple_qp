@@ -260,7 +260,9 @@ If you're looking for ideas, you can always check the [Issues tab](https://githu
 
 ## :bookmark_tabs: Citing this Repository
 
-If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Here is a `BibTeX` format:
+If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could cite me. Click on `Cite this repository` under the **About** section at the top-right corner of this page :arrow_upper_right:
+
+Here is the `BibTeX` reference:
 ```
 @software{Woolfrey_SimpleQPSolver_2023,
      author  = {Woolfrey, Jon},
@@ -273,8 +275,7 @@ If you use `SimpleQPSolver` and find it useful, I'd appreciate it if you could c
 ```
 Here's the automatically generated APA format:
 ```
-Woolfrey, J. (2023). SimpleQPSolver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/software_simple_qp
+Woolfrey, J. (2023). Simple QP Solver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/software_simple_qp
 ```
-Alternatively, click on `Cite this repository` on the top-right corner of this page.
 
 [:top: Back to top.](#cyclone-simple-qp-solver)

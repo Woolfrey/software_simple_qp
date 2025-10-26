@@ -26,15 +26,16 @@ int main(int argc, char *argv[])
 	
 	// Options for the interior point algorithm
 	SolverOptions<float> options;
-	options.maxSteps             = 100;
-	options.stepSizeTolerance    = 0.9;
+	options.maxSteps             = 10;
+	options.stepSizeTolerance    = 0.0001;
 	options.initialBarrierScalar = 500;
 	options.barrierReductionRate = 0.005;
 	
 	QPSolver<float> solver(options);                                                                // Create an instance of the class
 	
 	srand((unsigned int) time(NULL));                                                               // Seed the random number generator
-	
+
+/*	
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                        A GENERIC QP PROBLEM                        *\n"
 	          <<   "**********************************************************************\n" << std::endl;
@@ -154,7 +155,8 @@ int main(int argc, char *argv[])
 
 	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
 	          <<   "and it took " << t*1000 << " ms to solve (" << 1/t << " Hz).\n";
-	          
+*/
+     
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                      CONSTRAINED SYSTEMS                           *\n"
 	          <<   "**********************************************************************\n" << std::endl;
@@ -212,7 +214,7 @@ int main(int argc, char *argv[])
 	
 	for(int i = 0; i < x.size(); i++)
 	{
-		if(x(i) <= xMin(i) or x(i) >= xMax(i))
+		if(x(i) < xMin(i) - 1e-06 or x(i) > xMax(i) + 1e-06)
 		{
 			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!"
 			          << "  How did that happen? (ー_ーゞ\n";
@@ -222,10 +224,12 @@ int main(int argc, char *argv[])
 
 	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
 	          <<   "and it took " << t*1000 << " ms to solve (" << 1/t << " Hz).\n";
-	          
+
+          
 	std::cout << "\nThere is signicant error because the real solution lies outside the constraints.\n"
 	          << "BUT, the QP solver is able to satisfy them!\n";
-	          
+
+         
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                CONSTRAINED SYSTEMS (REDUNDANT CASE)                *\n"
 	          <<   "**********************************************************************\n" << std::endl;
@@ -242,7 +246,7 @@ int main(int argc, char *argv[])
 	
 	Eigen::VectorXf xd = 10*Eigen::VectorXf::Random(n);
 	
-	Eigen::VectorXf x0 = 10*Eigen::VectorXf::Random(n);
+	Eigen::VectorXf x0 = 2*Eigen::VectorXf::Random(n);
 	
 	std::cout << "\nWe can even solve redundant systems subject to constraint:\n"
 	          << "\n      min 0.5*(xd - x)'*W*(xd - x)\n"
@@ -255,8 +259,8 @@ int main(int argc, char *argv[])
 	
 	std::cout << "\nWe would call: 'solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0)'\n";
 	
-	std::cout << "\nHere is the solution for a " << m << "x" << n << " system using the primal method:\n";
-	
+	std::cout << "\nHere is the solution for a " << m << "x" << n << " system:\n";
+
 	timer = clock();
 	
 	x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
@@ -272,9 +276,9 @@ int main(int argc, char *argv[])
 	
 	for(int i = 0; i < x.size(); i++)
 	{
-		if(x(i) <= xMin(i) or x(i) >= xMax(i))
+		if(x(i) < xMin(i) - 1e-04 or x(i) > xMax(i) + 1e-04)
 		{
-			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED! (How did that happen?)\n";
+			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED! How did that happen? (ー_ーゞ\n";
 			break;
 		}
 	}
@@ -282,46 +286,12 @@ int main(int argc, char *argv[])
 	float error1 = (y - A*x).norm();
 	
 	std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
-		      <<   "and it took " << t1*1000 << " ms to solve (" << 1/t1 << " Hz).\n";
+		      <<   "and it took " << t1 * 1000 << " ms to solve (" << 1.0 / t1 << " Hz).\n";
 		  
 	std::cout << "\nIt took " << solver.results().numberOfSteps << " steps to solve.\n";
 	
 	std::cout << "\nThe objective function error is: "
 	          << (A.transpose()*(A*A.transpose()).ldlt().solve(A*x)).norm() << ".\n\n";
-	
-	try
-	{
-		solver.use_dual();
-		
-		timer = clock();
-		x = solver.constrained_least_squares(xd,Eigen::MatrixXf::Identity(n,n),A,y,xMin,xMax,x0);
-		timer = clock() - timer;
-		float t2  = (float)timer/CLOCKS_PER_SEC;
-		
-		float error2 = (y - A*x).norm();
-		
-		std::cout << "\nUsing the dual method we get:\n";
-		
-		comparison.col(1) = x;
-		std::cout << "\n" << comparison << std::endl;
-		
-		std::cout << "\nThe error ||y - A*x|| is: " << error2/y.norm() << ", "
-			  <<   "and it took " << t2*1000 << " ms to solve (" << 1/t2 << " Hz).\n";
-			  
-		std::cout << "\nIt took " << solver.results().numberOfSteps << " steps to solve.\n";
-		
-		std::cout << "\nThe objective function error is: "
-	       		  << (A.transpose()*(A*A.transpose()).ldlt().solve(A*x)).norm() << ".\n";
-
-		std::cout << "\nThe dual method was " << t1/t2 << " times faster. ";
-		
-		if(error1 > error2) std::cout << "The dual method was " << error1/error2 << " times more accurate.\n";
-		else                std::cout << "The primal method was " << error2/error1 << " times more accurate.\n";
-	}
-	catch(const std::exception &exception)
-	{
-		std::cout << exception.what() << std::endl;
-	}   
-
+	                   
 	return 0; 
 }

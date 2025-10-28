@@ -565,41 +565,7 @@ QPSolver<DataType>::constrained_least_squares(const Eigen::Vector<DataType, Eige
     }    
     else // _method = interior_point
     { 
-        unsigned int c = B.rows();                                                                // Number of inequality constraints
-        unsigned int m = A.rows();                                                                // Number of equality constraints
-        unsigned int n = A.cols();                                                                // Decision variable
-
-        using namespace Eigen;
-        
-        // H = [  0  -A ]
-        //     [ -A'  W ]
-        Matrix<DataType, Dynamic, Dynamic> H(m+n,m+n);
-        H.block(0,0,m,m).setZero();
-        H.block(0,m,m,n) = -A;
-        H.block(m,0,n,m) = -A.transpose();
-        H.block(m,m,n,n) = W;
-
-        // f = [    y  ]
-        //     [ -W*xd ]
-        Vector<DataType, Dynamic> f(m+n);
-        f.head(m) = y;
-        f.tail(n) = -W*xd;
-
-        // new_x0 = [ lambda ]
-        //          [   x0   ]
-        Vector<DataType, Dynamic> new_x0(m+n);
-        new_x0.head(m) = (A*W.ldlt().solve(A.transpose())).ldlt().solve(y - A*xd);                  // Initial guess for Lagrange multipliers
-        new_x0.tail(n) = x0;
-
-        // newB = [ 0 B ]
-        Matrix<DataType, Dynamic, Dynamic> newB(c,m+n);
-        newB.block(0,0,c,m).setZero();
-        newB.block(0,m,c,n) = B;
-        
-        _results.solution = interior_point(H * H.transpose(), H.transpose() * f,
-                                           Matrix<DataType, Dynamic, Dynamic>(0, n),
-                                           Vector<DataType, Dynamic>(0),
-                                           newB, z, new_x0).tail(n);  // Drop the Lagrange multipliers
+        _results.solution = interior_point(W, -W * xd, A, y, B, z, x0);
     }
     
     return _results.solution;                                                                       // Return decision variable x
@@ -859,103 +825,141 @@ QPSolver<DataType>::interior_point(const Eigen::Matrix<DataType, Eigen::Dynamic,
                                    const Eigen::Vector<DataType, Eigen::Dynamic> &z,
                                    const Eigen::Vector<DataType, Eigen::Dynamic> &x0)
 {
-    throw std::runtime_error("[ERROR] [QP SOLVER] interior_point(): " 
-                             "Interior point method not available in this release. "
-                             "Switch to active set instead.");
-    /*
-     // h = 0.5*x'*H*x + x'*f - sum log(d_i),   d_i = z_i - b_i'*x
-     // g = H*x + f + sum (1/d_i)*b_i
-     // I = H + sum (1/d_i^2)*b_i*b_i'
-     
-     // Variables used in this scope
-     DataType stepSize = std::numeric_limits<DataType>::max();                                      // Check for termination
-     DataType u = _options.initialBarrierScalar;                                                    // As it says
-     unsigned int dim = x0.size();                                                                  // Dimensions of the decision variaBL   e
-     unsigned int numConstraints = z.size();                                                        // As it says
-     Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> I(dim,dim);                              // Hessian matrix
-     Eigen::Vector<DataType,Eigen::Dynamic> g(dim);                                                 // Gradient vector
-     std::vector<DataType> d(numConstraints);                                                       // Distance to every constraint
-     std::vector<Eigen::Vector<DataType,Eigen::Dynamic>> b(numConstraints);                         // Row vectors of constraint matrix (transposed)
-     std::vector<Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic>> bbt(numConstraints);        // Outer product of row vectors
-     Eigen::Vector<DataType,Eigen::Dynamic> x(dim);                                                 // We want to solve for this
-     
-     // Do some pre-processing
-     bool initialConstraintViolated = false;
-     for(int j = 0; j < numConstraints; j++)
-     {
-          b[j]   = B.row(j).transpose();                                                            // Transpose the row vector
-          bbt[j] = b[j]*b[j].transpose();                                                           // Compute the outer product
+    using namespace Eigen;
+    
+  // std::cout << "Starting the interior point method.\n";
+    
+    // h = 0.5*x'*H*x + x'*f - sum log(d_i),   d_i = z_i - b_i'*x
+    // g = H*x + f + sum (1/d_i)*b_i
+    // I = H + sum (1/d_i^2)*b_i*b_i'
 
-          d[j] = z(j) - b[j].dot(x0);                                                               // Distance to constraint
-          
-          if(d[j] <= 0) initialConstraintViolated = true;                                           // Flag
-     }
-     
-     // Set the start point
-     if(initialConstraintViolated)
-     {
-          Eigen::Vector<DataType,Eigen::Dynamic> dz
-          = 1e-03*Eigen::Vector<DataType,Eigen::Dynamic>::Ones(numConstraints);                     // Add a tiny offset so we're not exactly on the constraint      
-          
-               if(numConstraints > dim) x = (B.transpose()*B).ldlt().solve(B.transpose()*(z - dz)); // Underdetermined system
-          else if(numConstraints < dim) x =  B.transpose()*(B*B.transpose()).ldlt().solve(z - dz);  // Overdetermined system
-          else                          x =  B.partialPivLu().solve(z - dz);                        // Exact solution
-     }
-     else x = x0;                                                                                   // Given start point
-     
-     // Run the interior point algorithm
-     for(int i = 0; i < _options.maxSteps; ++i)
-     {
-          _results.numberOfSteps = i+1;                                                             // Increment the counter
-          
-          // (Re)set values for new loop
-          g = H*x + f;                                                                              // Gradient vector
-          I = H;                                                                                    // Hessian matrix
-          
-          // Compute distance to every constraint
-          for(int j = 0; j < numConstraints; ++j)
-          {
-               d[j] = z(j) - b[j].dot(x);                                                           // Distance to constraint
-               
-               if(i == 0 and d[j] <= 0)
-               {
-                    throw std::runtime_error("[ERROR] [QP SOLVER] solve(): "
-                                             "Unable to find a solution that satisfies constraints.");
-               }
-               
-               if(d[j] <= 0) d[j] = 1e-03;                                                          // Constraint violated; set a small, but non-zero distance
-           
-               g += (u/d[j])*b[j];                                                                  // Add up gradient
-               I += (u/(d[j]*d[j]))*bbt[j];                                                         // Add up Hessian
-          }
+    // Variables used in this scope
+    DataType stepSize = std::numeric_limits<DataType>::max();                                       // Check for termination
+    DataType u = _options.initialBarrierScalar;                                                     // As it says
+    
+    unsigned int dim = x0.size();                                                                   // Dimensions of the decision variable 
+    unsigned int numConstraints = z.size();                                                         // As it says
+    
+    Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic> I(dim,dim);                                      // Hessian matrix
+    
+    Vector<DataType,Eigen::Dynamic> g(dim);                                                         // Gradient vector
+    
+    std::vector<DataType> d(numConstraints);                                                        // Distance to every constraint
+    std::vector<Eigen::Vector<DataType,Eigen::Dynamic>> b(numConstraints);                          // Row vectors of constraint matrix (transposed)
+    std::vector<Eigen::Matrix<DataType,Eigen::Dynamic,Eigen::Dynamic>> bbt(numConstraints);         // Outer product of row vectors
+    
+  //  std::cout << "x0 = " << x0.transpose() << "\n";
+    
+  //  std::cout << "Adjusting the initial guess.\n";
+    
+    // Shift the initial guess so it satisfies A * x = y
+    LDLT<Matrix<DataType, Dynamic, Dynamic>> invH = H.ldlt();                                       // We need this a couple of times
+    Matrix<DataType, Dynamic, Dynamic> invHAT = invH.solve(A.transpose());                          // We also need this a couple of times
+    LDLT<Matrix<DataType, Dynamic, Dynamic>> AinvHAT = (A * invHAT).ldlt();
+    Matrix<DataType, Dynamic, Dynamic> nullA = Matrix<DataType, Dynamic, Dynamic>::Identity(dim, dim)
+                                             - invHAT * AinvHAT.solve(A);
+                                             
+    Vector<DataType, Dynamic> x = invHAT * AinvHAT.solve(y) + nullA * invH.solve(f);
 
-          Eigen::Vector<DataType,Eigen::Dynamic> dx = I.ldlt().solve(-g);                           // Compute Newton step
-          
-          // Compute scalar for step size so that constraint is not violated on next step
-          DataType alpha = 1.0;
-          for(int j = 0; j < numConstraints; ++j)
-          {
-               DataType dotProduct = b[j].dot(dx);                                                  // Makes calcs a little easier
-               
-               if(d[j] - dotProduct <= 0) alpha = min(alpha,0.9*d[j]/dotProduct);                   // Shrink scalar if constraint violated
-          }
-          
-          dx *= alpha;                                                                              // Scale the step
-                    
-          stepSize = dx.norm();                                                                     // Magnitude of the step size
-          
-          if(stepSize <= _options.stepSizeTolerance) break;                                         // If smaller than tolerance, break
-          
-          // Increment values for next loop
-          x += dx;                                                                                  // Increment state
-          u *= _options.barrierReductionRate;                                                       // Reduce barrier
-     }
-     
-     _results.finalStepSize     = stepSize;
-     _results.objectiveFunction = x.transpose()*(0.5*H*x + f);
-     _results.solution          = x;
-     */
-     return x0;  
+  //  std::cout << "x = " << x.transpose() << "\n";
+    
+  //  std::cout << "Accounting for inequality constraint violations.\n";
+    
+    // Do some pre-processing on inequality constraints
+    std::vector<int> violatedConstraints;                                                           // To keep track
+
+    for (int i = 0; i < numConstraints; ++i)
+    {
+        b[i]   = B.row(i).transpose();                                                              // Transpose the row vector
+        bbt[i] = b[i]*b[i].transpose();                                                             // Compute the outer product
+
+        d[i] = z(i) - b[i].dot(x);                                                                  // Distance to constraint
+        
+     //   std::cout << "   Constraint " << i << " distance = " << d[i] << "\n";
+        
+        if (d[i] <= 0.0) violatedConstraints.push_back(i);
+    }
+    
+    // Adjust start point for violated inequality constraints
+    if (not violatedConstraints.empty())
+    {
+        Matrix<DataType, Dynamic, Dynamic> Bsub(violatedConstraints.size(), dim);
+        Vector<DataType, Dynamic> zsub(violatedConstraints.size());
+        
+        for (int i = 0; i < violatedConstraints.size(); ++i)
+        {
+            Bsub.row(i) = B.row(violatedConstraints[i]);
+            zsub(i) = z(violatedConstraints[i]) - 1e-04;
+        }
+        
+        x += Bsub.transpose() * (Bsub * Bsub.transpose()).ldlt().solve(zsub - Bsub * x);
+    }
+    
+   // std::cout << "y - A * x= " << (y - A * x).transpose() << "\n";
+    
+  //  std::cout << "x = " << x.transpose() << "\n";
+    
+    // Run the interior point algorithm
+    for (int i = 0; i < _options.maxSteps; ++i)
+    {
+  //      std::cout << "Step " << i+1 << "\n";
+        
+        _results.numberOfSteps = i+1;                                                               // Increment counter
+        
+        // (Re)set values for new loop
+        g = H * x + f;                                                                              // Gradient vector
+        I = H;                                                                                      // Hessian matrix
+        
+        // Compute the distance to every constraint
+        for (int j = 0; j < numConstraints; ++j)
+        {
+            d[j] = z(j) - b[j].dot(x);
+            
+           // std::cout << "   Constraint " << j << " distance = " << d[j] << "\n";
+            
+            if (i == 0 and d[j] < 0.0)
+            {
+                throw std::runtime_error("[ERROR] [QP SOLVER] interior_point(): "
+                                         "Unable to find a solution that satisfies constraints.");
+            }
+            
+            if (d[j] <= 0.0) d[j] = 1e-04;                                                          // Constraint violated; set a very small, non-zero number
+
+            g += (u / d[j]) * b[j];                                                                 // Add up gradient
+            I += (u / (d[j] * d[j])) * bbt[j];                                                      // Add up Hessian
+        }
+
+        Vector<DataType, Dynamic> dx = nullA * I.ldlt().solve(-g);                                  // Compute Newton step
+        
+        // Compute scalar for step size that we don't violate any constraints
+        DataType alpha = 1.0;
+        
+        for (int j = 0; j < numConstraints; ++j)
+        {
+            DataType addedDistance = b[j].dot(dx);                                                  // i.e. how much we will move toward inequality constraint
+            
+            if (d[j] - addedDistance <= 0.0) alpha = min(alpha, 0.9 * d[j] / addedDistance);        // Shrink step size multiplier to ensure we don't violated constraint
+        }
+        
+    //    std::cout << "   alpha = " << alpha << "\n";
+    //    std::cout << "      dx = " << dx.transpose() << "\n";
+        
+        dx *= alpha;                                                                                // Scale the step size
+        
+        stepSize = dx.norm();                                                                       // Save the norm
+        
+        if (stepSize <= _options.stepSizeTolerance) break;                                          // Optimal solution found
+        
+        // Increment values for next loop
+        x += dx;
+        u *= _options.barrierReductionRate;        
+    }
+
+    _results.finalStepSize     = stepSize;
+    _results.objectiveFunction = x.transpose()*(0.5 * H * x + f);
+    _results.solution          = x;
+
+    return x;
 }
   
 /*        NOTE: This code below solve the dual problem. It is very fast, but not 100% reliable.

@@ -24,18 +24,18 @@ int main(int argc, char *argv[])
 	Eigen::MatrixXf H, A, comparison;                                                               // Matrices used in various problems
 	Eigen::VectorXf f, x, xMin, xMax, y;                                                            // Vectors used in various problems                                                                       
 	
-	// Options for the interior point algorithm
+	// Options for the solver
 	SolverOptions<float> options;
-	options.maxSteps             = 10;
-	options.stepSizeTolerance    = 0.0001;
-	options.initialBarrierScalar = 500;
-	options.barrierReductionRate = 0.005;
+	options.maxSteps             = 10;                                                              // Terminates after this many steps
+	options.stepSizeTolerance    = 0.001;                                                           // Terminates if step size is smaller than this
+	options.initialBarrierScalar = 500;                                                             // This is for the interior point method
+	options.barrierReductionRate = 0.005;                                                           // This is for the interior point method
+	options.method = "active set";
 	
 	QPSolver<float> solver(options);                                                                // Create an instance of the class
 	
 	srand((unsigned int) time(NULL));                                                               // Seed the random number generator
 
-/*	
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                        A GENERIC QP PROBLEM                        *\n"
 	          <<   "**********************************************************************\n" << std::endl;
@@ -66,14 +66,14 @@ int main(int argc, char *argv[])
 	std::cout << "\nThen we can call `Eigen::VectorXf x = QPSolver<float>::solve(H,f);' to get:\n";
 	
 	timer = clock();
-	x = QPSolver<float>::solve(H,f);
+	x     = QPSolver<float>::solve(H,f);
 	timer = clock() - timer;
-	t  = (float)timer/CLOCKS_PER_SEC;
+	t     = (float)timer / CLOCKS_PER_SEC;
 	
 	std::cout << "\n" << x.transpose() << std::endl;
 	
-	std::cout << "\nIt took " << t*1000 << " ms to solve (" << 1/t << " Hz).\n"
-	          << "\n(You could also use doubles here with Eigen::VectorXd x = QPSolver<double>::solve(H,f)).\n";
+	std::cout << "\nIt took " << t * 1000 << " ms to solve (" << 1 / t << " Hz).\n"
+	          << "\nYou could also use doubles here with Eigen::VectorXd x = QPSolver<double>::solve(H,f).\n";
 	          
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                      UNDERDETERMINED SYSTEMS                       *\n"
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 	          << " - A (mxn) is also given,\n"
 	          << " - W (mxm) is a weighting matrix, and\n"
 	          << " - x (nx1) is the decision variable.\n"
-	          << "\nIt is assumed that m > n so the equations are underdetermined.\n";
+	          << "\nIt is assumed that m > n.\n";
 	
 	std::cout << "\nFor example, here is a " << m << "x" << n << " system where A is:\n";
 	
@@ -107,14 +107,14 @@ int main(int argc, char *argv[])
 	          << "'Eigen::VectorXf x = QPSolver<float>least_squares(y,A,W)':\n";
 	          
 	timer = clock();
-	x = QPSolver<float>::least_squares(y,A,Eigen::MatrixXf::Identity(m,m));
+	x     = QPSolver<float>::least_squares(y,A,Eigen::MatrixXf::Identity(m,m));
 	timer = clock() - timer;
-	t  = (float)timer/CLOCKS_PER_SEC;	
+	t     = (float)timer/CLOCKS_PER_SEC;	
 	
 	std::cout << "\n" << x.transpose() << std::endl;
 	
-	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
-	          <<   "and it took " << t*1000 << " ms to solve (" << 1/t << " Hz).\n";
+	std::cout << "\nThe error norm ||y - A*x|| is: " << (y - A*x).norm() << ", "
+	          <<   "and it took " << t * 1000 << " ms to solve (" << 1 / t << " Hz).\n";
 	          
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                      OVERDETERMINED SYSTEMS                        *\n"
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 	A = Eigen::MatrixXf::Random(m,n);
 	y = A*Eigen::VectorXf::Random(n);
 	
-	std::cout << "\nWe can also solve systems where the solution is *over* determined. "
+	std::cout << "\nWe can also solve systems where the solution is overdetermined. "
 	          <<   "For example, the matrix A here is " << m << "x" << n << ":\n";
 		
 	std::cout << "\n" << A << std::endl;
@@ -139,23 +139,22 @@ int main(int argc, char *argv[])
 	          <<   "desired value xd for the solution.\n This problem takes the form:\n";
 	          
 	std::cout << "\n      min 0.5*(xd - x)'*W*(xd - x)\n"
-	          <<   "     subject to: A*x = y\n";
+	          <<   "      subject to: A*x = y\n";
 	
 	std::cout << "\nWhere W (nxn) is a weighting matrix. We can then call "
 	          <<   "'Eigen::VectorXf x = QPSolver<float>redundant_least_squares(xd,W,A,y);' to get:\n";
 	          
 	timer = clock();
-	x = QPSolver<float>::redundant_least_squares(Eigen::VectorXf::Random(n),
+	x     = QPSolver<float>::redundant_least_squares(Eigen::VectorXf::Random(n),
 	                                             Eigen::MatrixXf::Identity(n,n),
 	                                             A, y);
 	timer = clock() - timer;
-	t  = (float)timer/CLOCKS_PER_SEC;	
+	t     = (float)timer / CLOCKS_PER_SEC;	
 	
 	std::cout << "\n" << x.transpose() << std::endl;
 
-	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
-	          <<   "and it took " << t*1000 << " ms to solve (" << 1/t << " Hz).\n";
-*/
+	std::cout << "\nThe error norm ||y - A*x|| is: " << (y - A*x).norm() << ", "
+	          <<   "and it took " << t * 1000 << " ms to solve (" << 1 / t << " Hz).\n";
      
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                      CONSTRAINED SYSTEMS                           *\n"
@@ -169,7 +168,7 @@ int main(int argc, char *argv[])
 	y = A*x;
 	
 	xMin = -5*Eigen::VectorXf::Ones(n);
-	xMax =  5*Eigen::VectorXf::Ones(n); xMax(1) = 2.7; xMax(3) = 3.6;                           // Manually override the limits
+	xMax =  5*Eigen::VectorXf::Ones(n); xMax(1) = 2.7; xMax(3) = 3.6;                               // Manually override the limits
 	          
 	std::cout << "\nOften there are constraints on the solution. A generic form of this problem is:\n"
 	          << "\n     min 0.5*x'*H*x + x'*f\n"
@@ -182,13 +181,13 @@ int main(int argc, char *argv[])
 	          << "We would call: `Eigen::VectorXf x = solver.solve(H,f,B,z,x0);'\n";
 	          
 	std::cout << "\nA more specific example is for a constrained least squares problem of the form:\n"
-                  << "\n     min 0.5*(y - A*x)'*W*(y - A*x)\n"
-                  << "\n     subject to: xMin <= x <= xMax\n"
-                  << "\nwhere xMin (nx1) and xMax(nx1) are lower and upper bounds on the solution.\n"
-                  << "\nThe equivalent constraints here are:\n"
-                  << "\n    B = [  I ]  z = [  xMax ]\n"
-                  <<   "        [ -I ]      [ -xMin ]\n"
-                  << "\n(I wrote special function for this case because I am lazy.)\n";     
+              << "\n     min 0.5*(y - A*x)'*W*(y - A*x)\n"
+              << "\n     subject to: xMin <= x <= xMax\n"
+              << "\nwhere xMin (nx1) and xMax(nx1) are lower and upper bounds on the solution.\n"
+              << "\nThe equivalent constraints here are:\n"
+              << "\n    B = [  I ]  z = [  xMax ]\n"
+              <<   "        [ -I ]      [ -xMin ]\n"
+              << "\n(I wrote a special function for this case because I am lazy.)\n";     
                   
         std::cout << "\nFor the following system of A:\n";
         
@@ -201,9 +200,9 @@ int main(int argc, char *argv[])
         std::cout << "\nWe can call 'Eigen::VectorXf x = solver.least_squares(y,A,W,xMin,xMax,x0);'\n";
         
 	timer = clock();
-	x = solver.constrained_least_squares(y,A,Eigen::MatrixXf::Identity(m,m),xMin,xMax,0.5*(xMin+xMax));
+	x     = solver.constrained_least_squares(y,A,Eigen::MatrixXf::Identity(m,m),xMin,xMax,0.5*(xMin+xMax));
 	timer = clock() - timer;
-	t  = (float)timer/CLOCKS_PER_SEC;
+	t     = (float)timer/CLOCKS_PER_SEC;
 	
 	std::cout << "\nHere is xMin, the solution x, and xMax side-by-side:\n";
 	comparison.resize(n,3); 
@@ -218,18 +217,14 @@ int main(int argc, char *argv[])
 		{
 			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED!"
 			          << "  How did that happen? (ー_ーゞ\n";
-			break;
+			return -1;
 		}
 	}
 
-	std::cout << "\nThe error ||y - A*x|| is: " << (y - A*x).norm() << ", "
-	          <<   "and it took " << t*1000 << " ms to solve (" << 1/t << " Hz).\n";
-
-          
-	std::cout << "\nThere is signicant error because the real solution lies outside the constraints.\n"
-	          << "BUT, the QP solver is able to satisfy them!\n";
-
-         
+	std::cout << "\nThe error norm ||y - A*x|| is: " << (y - A*x).norm() << "\n\n"
+	          <<   "It took " << t * 1000 << " ms to solve (" << 1 / t << " Hz) "
+	          <<   "in " << solver.results().numberOfSteps << " steps.\n";
+      
 	std::cout << "\n**********************************************************************\n"
 	          <<   "*                CONSTRAINED SYSTEMS (REDUNDANT CASE)                *\n"
 	          <<   "**********************************************************************\n" << std::endl;
@@ -240,13 +235,13 @@ int main(int argc, char *argv[])
 	xMin = -3*Eigen::VectorXf::Ones(n);
 	xMax =  3*Eigen::VectorXf::Ones(n);
 	
-	A = Eigen::MatrixXf::Random(m,n);
+	A                     = Eigen::MatrixXf::Random(m,n);
 	Eigen::VectorXf xTrue = Eigen::VectorXf::Random(n);
-	y = A*xTrue;
+	y                     = A*xTrue;
 	
 	Eigen::VectorXf xd = 10*Eigen::VectorXf::Random(n);
 	
-	Eigen::VectorXf x0 = 2*Eigen::VectorXf::Random(n);
+	Eigen::VectorXf x0 =  5*Eigen::VectorXf::Random(n);
 	
 	std::cout << "\nWe can even solve redundant systems subject to constraint:\n"
 	          << "\n      min 0.5*(xd - x)'*W*(xd - x)\n"
@@ -255,7 +250,8 @@ int main(int argc, char *argv[])
 	          
 	std::cout << "\nAgain, there is a function for least squares problems with lower and upper "
 	          << "bounds on the solution:\n"
-	          << "\n      B*x <= z  <--->  xMin <= x <= xMax\n";
+	          << "\n      B = [  I ] * x <= z = [  xMax ]"
+	          << "\n          [ -I ]            [ -xMin ]\n";
 	
 	std::cout << "\nWe would call: 'solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0)'\n";
 	
@@ -279,19 +275,13 @@ int main(int argc, char *argv[])
 		if(x(i) < xMin(i) - 1e-04 or x(i) > xMax(i) + 1e-04)
 		{
 			std::cerr << "\n[FLAGRANT SYSTEM ERROR] CONSTRAINT VIOLATED! How did that happen? (ー_ーゞ\n";
-			break;
+			return -1;
 		}
 	}
-		
-	float error1 = (y - A*x).norm();
 	
-	std::cout << "\nThe error ||y - A*x|| is: " << error1/y.norm() << ", "
-		      <<   "and it took " << t1 * 1000 << " ms to solve (" << 1.0 / t1 << " Hz).\n";
-		  
-	std::cout << "\nIt took " << solver.results().numberOfSteps << " steps to solve.\n";
+	std::cout << "\nThe error norm is ||y - A*x|| is: " << (y - A*x).norm() << ".\n\n"
+		      <<   "It took " << t1 * 1000 << " ms to solve (" << 1.0 / t1 << " Hz) "
+              <<   "in " << solver.results().numberOfSteps << " steps.\n";
 	
-	std::cout << "\nThe objective function error is: "
-	          << (A.transpose()*(A*A.transpose()).ldlt().solve(A*x)).norm() << ".\n\n";
-	                   
 	return 0; 
 }

@@ -812,9 +812,11 @@ QPSolver<DataType>::active_set(const Eigen::Matrix<DataType, Eigen::Dynamic, Eig
      return x;  
 }
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
- //          Solve a problem of the form: min 0.5*x'*H*x + x'*f subject to: B*x <= z              //        
-///////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+   //                               min 1/2 x^T * H * x + x^T * f                                    //
+  //                                    subject:  A * x = y                                         //
+ //                                               B * x < z                                        //
+////////////////////////////////////////////////////////////////////////////////////////////////////
 template <class DataType> 
 Eigen::Vector<DataType, Eigen::Dynamic>
 QPSolver<DataType>::interior_point(const Eigen::Matrix<DataType, Eigen::Dynamic, Eigen::Dynamic> &H,

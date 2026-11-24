@@ -3,17 +3,20 @@ A small, efficient class for solving convex optimisation problems. A generic qua
 ```math
 \begin{align}
 	\min_{\mathbf{x}} ~ \frac{1}{2}\mathbf{x^\mathrm{T}Hx + x^\mathrm{T}f} \\
-	\text{subject to: } \mathbf{Bx \le z}
+	\text{subject to: } \mathbf{Ax} &= \mathbf{y} \\
+	                    \mathbf{Bx} &\le \mathbf{z}
 \end{align}
 ```
 where:
 - $\mathbf{x}\in\mathbb{R}^\mathrm{n}$ is the decision variable,
-- $\mathbf{H = H^\mathrm{T}}\in\mathbb{R}^\mathrm{n\times n}$ is a weighting matrix,
+- $\mathbf{H = H^\mathrm{T}}\in\mathbb{R}^\mathrm{n\times n}$ is a positive (semi)definite weighting matrix,
 - $\mathbf{f}\in\mathbb{R}^\mathrm{n}$ is the linear component of the quadratic equation,
-- $\mathbf{B}\in\mathbb{R}^\mathrm{c\times n}$ is a constraint matrix, and
-- $\mathbf{z}\in\mathbb{R}^\mathrm{c}$ is a constraint vector.
+- $\mathbf{A}\in\mathbb{R}^\mathrm{m\times n}$ is an equality constraint matrix,
+- $\mathbf{y}\in\mathbb{R}^\mathrm{m}$ is an equality constraint vector,
+- $\mathbf{B}\in\mathbb{R}^\mathrm{c\times n}$ is an inequality constraint matrix, and
+- $\mathbf{z}\in\mathbb{R}^\mathrm{c}$ is an inequality constraint vector.
 
-There are also several functions for handling linear least squares problems with equality and inequality constraints. It is fast, and effective. It has been used to control the upper body of a humanoid robot subject to grasp constraints and joint limits.
+There are also several functions for handling linear least squares problems with equality and inequality constraints. Inequality constrained problems can be solved with either an **interior point** or an **active set** algorithm. It is fast, and effective. It has been used to control the upper body of a humanoid robot subject to grasp constraints and joint limits.
 
 <p align="center">
 	<img src="https://github.com/Woolfrey/software_simple_qp/blob/master/assets/bimanual_manipulation.gif" width=200 height="auto"/>
@@ -28,12 +31,14 @@ There are also several functions for handling linear least squares problems with
  	- [Installing SimpleQPSolver](#installing-simpleqpsolver)
 	- [Automatic Download in Another Package](#automatic-download-in-another-package)
 - [Using the QP Solver](#wrench-using-the-qp-solver)
+  	- [Solver Options](#solver-options)
+  	- [Solver Results](#solver-results)
   	- [A Generic QP Problem](#a-generic-qp-problem)
    	- [Linear Least Squares](#linear-least-squares-linear-regression)
-   	- [Least Squares with Equality Constraints](#least-squares-with-equality-constraints-over-determined-systems)
-   	 - [Optimisation with Inequality Constraints](#optimisation-with-inequality-constraints)
-   	- [Options for the Interior Point Algorithm](#options-for-the-interior-point-algorithm)
+   	- [Least Squares with Equality Constraints](#least-squares-with-equality-constraints-under-determined-systems)
+   	- [Optimisation with Inequality Constraints](#optimisation-with-inequality-constraints)
    	- [Running the Test File](#running-the-test-file)
+- [Applications](#applications)
 - [Contributing](#handshake-contributing)
 - [Citing this Repository](#bookmark_tabs-citing-this-repository)
 - [License](#scroll-license)
@@ -61,6 +66,13 @@ software_simple_qp/include/QPSolver.h
 ```
 That is all!
 
+>[!IMPORTANT]
+> `QPSolver.h` requires C++17 or later. In your `CMakeLists.txt` you can set:
+> ```
+> set(CMAKE_CXX_STANDARD 17)
+> set(CMAKE_CXX_STANDARD_REQUIRED ON)
+> ```
+
 >[!NOTE]
 > If you want to build the package for some reason, there is a simple `test.cpp` file [you can run](#running-the-test-file) that demonstrates the use of the `QPSolver` class.
 
@@ -82,23 +94,68 @@ You can use `float` or `double` with this class. Input arguments for the `Eigen`
 - `Eigen::MatrixXf` and `Eigen::VectorXf` when using `QPSolver<float>`, or
 - `Eigen::MatrixXd` and `Eigen::VectorXd` when using `QPSolver<double>`.
 
-For problems _without_ inequality constraints, you can call `static` methods without creating a `QPSolver` object:
-- `QPSolver<float>::solve(H,f)`
-- `QPSolver<double>::least_squares(y,A,W)`
-- `QPSolver<float>::redundant_least_squares(xd,W,A,y)`
+First create a solver object. Every method returns a `Result` struct containing the solution, and information about how it was found:
+```
+QPSolver<double> solver;
 
-Methods with inequality constraints, e.g. $\mathbf{Bx \le z}$, or $\mathbf{x_\mathrm{min} \le x \le x_\mathrm{max}}$ use an interior point algorithm, and thus require you to create an instance of the class.
+QPSolver<double>::Result result = solver.solve(H,f);
 
-Some examples are below.
+Eigen::VectorXd x = result.solution;
+```
+
+>[!TIP]
+> The solver stores its matrix decompositions internally, so they are reused between calls. If you're solving the same size problem repeatedly (e.g. in a control loop), create the solver once and reuse it rather than creating a new one each time.
+
+### Solver Options:
+
+Options are set when constructing the solver:
+```
+QPSolver<double>::Options options;
+options.method               = QPSolver<double>::Options::Method::interiorPoint;
+options.minimumStepSize      = 1e-03;
+options.maximumIterations    = 20;
+options.maximumSolutionTime  = 1e-02;
+options.initialBarrierScalar = 100;
+options.barrierReductionRate = 1e-02;
+
+QPSolver<double> solver(options);
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `method` | `interiorPoint` | The algorithm for inequality constrained problems: `activeSet` or `interiorPoint`. |
+| `minimumStepSize` | `1e-03` | The solver terminates when the norm of the step $\|\Delta\mathbf{x}\|$ is less than this value. A smaller value means a more accurate solution, but slower solution time. |
+| `maximumIterations` | `5` | The solver terminates if this many iterations are reached. A higher value means a more accurate solution, but it might take longer to solve. |
+| `maximumSolutionTime` | `1e-02` | The solver terminates if it takes longer than this many seconds. |
+| `initialBarrierScalar` | `100` | **Interior point only.** The inequality constraints are converted to a log-barrier function. This determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint. |
+| `barrierReductionRate` | `1e-02` | **Interior point only.** Every iteration the barrier slope is multiplied by this value, so it must be between 0 and 1. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely. |
+
+The constructor will throw an `std::invalid_argument` if any of these are out of range.
+
+### Solver Results:
+
+The `Result` struct contains:
+
+| Field | Description |
+|---|---|
+| `solution` | The decision variable $\mathbf{x}$ which minimises the objective function. |
+| `status` | Why the solver terminated: `converged`, `maxIterationsReached`, or `timeout`. |
+| `numberOfIterations` | How many iterations the solver performed. |
+| `solutionTime` | How long it took to solve the problem (seconds). |
+| `finalStepSize` | Magnitude of the last step before the solver terminated. |
+
+For problems without inequality constraints the status is always `converged`. For problems _with_ inequality constraints, a status of `maxIterationsReached` or `timeout` means the solution is the best found so far: it satisfies the constraints, but may not be optimal. In a real-time control loop this is often still perfectly usable.
+
+[:top: Back to top.](#cyclone-simple-qp-solver)
 
 ### A Generic QP Problem:
 
 ```math
 \min_{\mathbf{x}} \frac{1}{2}\mathbf{x^\mathrm{T} Hx + x^\mathrm{T}f}
 ```
-Assuming $\mathbf{H}$ and $\mathbf{f}$ are given, then you can call:
+Assuming $\mathbf{H}$ is positive definite and $\mathbf{f}$ is given, then you can call:
 ```
-Eigen::VectorXd x = QPSolver<double>::solve(H,f);
+Eigen::VectorXd x = solver.solve(H,f).solution;
 ```
 >[!TIP]
 > You can actually solve this yourself by calling something like `x = H.ldlt().solve(-f)`, but I put this function in for completeness.
@@ -117,9 +174,9 @@ where:
 
 Call:
 ```
-Eigen::VectorXf x = QPSolver<float>::least_squares(y,A,W);
+Eigen::VectorXf x = solver.least_squares(y,A,W).solution;
 ```
-### Least Squares with Equality Constraints (Over-determined Systems):
+### Least Squares with Equality Constraints (Under-determined Systems):
 ```math
 \begin{align}
 \min_{\mathbf{x}} \frac{1}{2}\|\mathbf{x_\mathrm{d} - x}\|^2_\mathrm{W} = \frac{1}{2}\mathbf{\left(x_\mathrm{d} - x\right)^\mathrm{T} W\left(x_\mathrm{d} - x\right)} \\
@@ -131,12 +188,12 @@ where:
 - $\mathbf{A}\in\mathbb{R}^\mathrm{m\times n}$,
 - $\mathbf{x}\in\mathbb{R}^\mathrm{n}$,
 - $\mathbf{x}_\mathrm{d}\in\mathbb{R}^\mathrm{n}$ is a _desired_ value for $\mathbf{x}$,
-- $\mathbf{W}\in\mathbb{R}^\mathrm{n\times n}$ weights the solution,
+- $\mathbf{W}\in\mathbb{R}^\mathrm{n\times n}$ is a positive definite weighting on the solution,
 - m < n (more inputs than outputs)
 
 In this situation the $\mathbf{x}$ vector has more dimensions than the $\mathbf{y}$ vector. Therefore, infinite solutions exist. You can give a desired value $\mathbf{x}_\mathrm{d}$ that the solver will try to achieve whilst satisfying the relationship $\mathbf{Ax = y}$. Call:
 ```
-Eigen::VectorXd x = QPSolver<double>::redundant_least_squares(xd,W,A,y);
+Eigen::VectorXd x = solver.redundant_least_squares(xd,W,A,y).solution;
 ```
 
 ### Optimisation with Inequality Constraints:
@@ -147,18 +204,22 @@ Eigen::VectorXd x = QPSolver<double>::redundant_least_squares(xd,W,A,y);
 \end{align}
 ```
 >[!NOTE]
-> For problems like this with inequality constraints, the solver uses an interior point algorithm. This uses Newton's method to iteratively minimize the objective function whilst satisfying the inequality. It therefore requires a _start point_ or _initial guess_.
+> For problems like this with inequality constraints, the solver uses an iterative algorithm (interior point or active set, depending on the [options](#solver-options)). It therefore requires a _start point_ or _initial guess_.
 
-First create an object, then call the function:
+Call:
 ```
-QPSolver<double> solver;
-Eigen::VectorXd x = solver.solve(H,f,B,z,x0);
+Eigen::VectorXd x = solver.solve(H,f,B,z,x0).solution;
 ```
-where `x0` is the start point argument. It can have a huge influence on the result, so it is good to give the solver an approximate solution if you can.
+where `x0` is the start point argument. If you also have equality constraints $\mathbf{Ax = y}$, use:
+```
+Eigen::VectorXd x = solver.solve(H,f,A,y,B,z,x0).solution;
+```
 
-If you're repeatedly solving a QP problem you can get the last solution and use that as the input:
+If you're repeatedly solving a QP problem (e.g. in a control loop), you can use the last solution as the start point for the next one:
 ```
-Eigen::VectorXd x0 = solver.last_solution();
+QPSolver<double>::Result result = solver.solve(H,f,B,z,x0);
+
+x0 = result.solution;                                                                               // Use for next time
 ```
 There are several functions conveniently written for least squares type problems:
 
@@ -172,7 +233,7 @@ There are several functions conveniently written for least squares type problems
 ```
 use:
 ```
-Eigen::VectorXf x = solver.constrained_least_squares(y,A,W,xMin,xMax,x0);
+Eigen::VectorXf x = solver.constrained_least_squares(y,A,W,xMin,xMax,x0).solution;
 ```
 
 #### Redundant least squares with upper and lower bounds:
@@ -186,7 +247,7 @@ Eigen::VectorXf x = solver.constrained_least_squares(y,A,W,xMin,xMax,x0);
 ```
 use:
 ```
-Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0);
+Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0).solution;
 ```
 
 #### Redundant least squares with inequality constraints:
@@ -200,23 +261,10 @@ Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,xMin,xMax,x0);
 ```
 use:
 ```
-Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0);
+Eigen::VectorXd x = solver.constrained_least_squares(xd,W,A,y,B,z,x0).solution;
 ```
->[!WARNING]
-> When using this particular function the desired value $\mathbf{x}_{\mathrm{d}}$ must satisfy constraints when projected on to the null space of $\mathbf{A}$.
 
 [:top: Back to top.](#cyclone-simple-qp-solver)
-
-### Options for the Interior Point Algorithm
-
-There are several parameters that can be set when solving for inequality constaints:
-- `set_step_size(const DataType &size)`: The parameter $\alpha$ scales the step size $\alpha\cdot\Delta\mathbf{x}$. Default value is 1; a smaller size will mean slower convergence.
-- `set_tolerance(const DataType &tolerance)`: The algorithm terminates when $\|\alpha\cdot\Delta\mathbf{x}\|$ is less than this value. A smaller value means a more accurate solution, but slower solution time.
-- `set_num_steps(const unsigned int &numer)`: The algorithm terminates if this number of steps is reached. A higher value means a more accurate solution, but it might take longer to solve.
-- `set_barrier_scalar(const DataType &scalar)`: The inequality constraints are converted to a log-barrier function. This parameter determines how steep the slope of the barrier is. A smaller value means a faster solution, but you may prematurely run in to the constraint and terminate the algorithm.
-- `set_barrier_reduction_rate(const DataType &rate)`: Every loop the barrier slope is decreased. This determines how fast it decreases. A smaller value means the barrier effect will shrink quickly. This will make the algorithm faster, but then it may not find a solution if it hits the constraints prematurely.
-
- [:top: Back to top.](#cyclone-simple-qp-solver)
 
 ### Running the Test File:
 
@@ -242,11 +290,22 @@ make
 ```
 You can then run
 ```
-./test
+./test interiorPoint
 ```
-which prints information about the use of different class methods, as well as the accuracy and speed of solutions.
+or
+```
+./test activeSet
+```
+to choose which method is used for the constrained problems (the default is `interiorPoint`). It prints information about the use of different class methods, as well as the accuracy and speed of solutions.
 
 <img src="https://github.com/Woolfrey/software_simple_qp/assets/62581255/8ecb93a6-e45b-4ff9-aebf-1f2f27c62f25" width="600" height="auto">
+
+[:top: Back to top.](#cyclone-simple-qp-solver)
+
+## :rocket: Applications
+
+- Woolfrey, J. (2026). Simultaneous force and motion control in generalised coordinates (arXiv:2610.22813). arXiv. https://doi.org/10.48550/arXiv.2610.22813
+- Cheng, C., Li, T., Woolfrey, J., Zhao, L., Huang, S. (2026). MR-MPCC: Model Predictive Contouring Control for Robotic Manipulator Tracking under Moving Reference Frames IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS) [Link](https://arxiv.org/pdf/2610.21292)
 
 [:top: Back to top.](#cyclone-simple-qp-solver)
 
@@ -270,13 +329,13 @@ Here is the `BibTeX` reference:
      month   = aug,
      title   = {{S}imple {QP} {S}olver},
      url     = {https://github.com/Woolfrey/software_simple_qp},
-     version = {1.0.0},
-     year    = {2023}
+     version = {3.0.0},
+     year    = {2026}
 }
 ```
 Here's the automatically generated APA format:
 ```
-Woolfrey, J. (2023). Simple QP Solver (Version 1.0.0) [Computer software]. https://github.com/Woolfrey/software_simple_qp
+Woolfrey, J. (2026). Simple QP Solver (Version 3.0.0) [Computer software]. https://github.com/Woolfrey/software_simple_qp
 ```
 
 [:top: Back to top.](#cyclone-simple-qp-solver)
